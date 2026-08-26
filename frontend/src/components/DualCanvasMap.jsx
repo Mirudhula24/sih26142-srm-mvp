@@ -18,41 +18,44 @@ const BASEMAP = {
 /**
  * Two MapLibre instances under a curtain slider.
  *
- * MapLibre is pinned to v3.6 LTS: v4 changed the internal WebGL camera matrices and
- * loses context when Deck.gl shares the canvas. See docs/TECH_CLASHES.md (Clash 4).
+ * The maps are kept camera-locked by mirroring only USER-driven movement
+ * (events that carry an originalEvent). Programmatic jumpTo calls have no
+ * originalEvent, so they can't trigger a mirror-back — which removes the
+ * ping-pong that used to leave the two canvases slightly misaligned.
  */
 export default function DualCanvasMap({ inputTileUrl, outputTileUrl }) {
   const leftRef = useRef(null);
   const rightRef = useRef(null);
   const leftMap = useRef(null);
   const rightMap = useRef(null);
-  const syncing = useRef(false);
 
   const { camera, setCamera, sliderPosition, setSliderPosition } = useSrmStore();
 
   useEffect(() => {
-    const opts = { style: BASEMAP, center: camera.center, zoom: camera.zoom, attributionControl: false };
+    const opts = {
+      style: BASEMAP,
+      center: camera.center,
+      zoom: camera.zoom,
+      attributionControl: false,
+    };
     leftMap.current = new maplibregl.Map({ container: leftRef.current, ...opts });
     rightMap.current = new maplibregl.Map({ container: rightRef.current, ...opts });
 
-    // Bidirectional camera lock. The `syncing` guard breaks the feedback loop that
-    // would otherwise make both maps fight each other and drop the frame rate.
-    const link = (from, to) => () => {
-      if (syncing.current) return;
-      syncing.current = true;
+    // Mirror one map's camera onto the other. Only runs for real user input
+    // (e.originalEvent is set for drag/zoom/scroll, absent for jumpTo), so the
+    // mirrored jumpTo never bounces back and the two stay pixel-aligned.
+    const mirror = (from, to) => (e) => {
+      if (!e.originalEvent) return;
       to.jumpTo({
         center: from.getCenter(),
         zoom: from.getZoom(),
         bearing: from.getBearing(),
         pitch: from.getPitch(),
       });
-      syncing.current = false;
     };
 
-    const onLeft = link(leftMap.current, rightMap.current);
-    const onRight = link(rightMap.current, leftMap.current);
-    leftMap.current.on('move', onLeft);
-    rightMap.current.on('move', onRight);
+    leftMap.current.on('move', mirror(leftMap.current, rightMap.current));
+    rightMap.current.on('move', mirror(rightMap.current, leftMap.current));
 
     leftMap.current.on('moveend', () => {
       const m = leftMap.current;
@@ -64,7 +67,15 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl }) {
       });
     });
 
+    // Keep the two in lock-step on resize as well.
+    const onResize = () => {
+      leftMap.current?.resize();
+      rightMap.current?.resize();
+    };
+    window.addEventListener('resize', onResize);
+
     return () => {
+      window.removeEventListener('resize', onResize);
       leftMap.current?.remove();
       rightMap.current?.remove();
     };

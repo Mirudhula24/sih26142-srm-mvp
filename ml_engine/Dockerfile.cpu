@@ -17,7 +17,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # CPU wheels only -- the default index would pull the full CUDA runtime.
-RUN pip install --no-cache-dir torch==2.2.2 --index-url https://download.pytorch.org/whl/cpu \
+RUN pip install --no-cache-dir torch==2.2.2 --extra-index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
