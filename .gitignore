@@ -37,3 +37,4 @@ Thumbs.db
 .idea/
 .vscode/
 storage/cogs/previews/*.png
+storage/cogs/*.csv

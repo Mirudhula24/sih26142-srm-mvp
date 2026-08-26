@@ -63,8 +63,14 @@ export default function DualCanvasMap({ inputLayer, outputLayer, drawMode, onAoi
     leftMap.current = new maplibregl.Map({ container: leftRef.current, ...opts });
     rightMap.current = new maplibregl.Map({ container: rightRef.current, ...opts });
 
-    // Bidirectional camera lock. The `syncing` guard breaks the feedback loop that
-    // would otherwise make both maps fight each other and drop the frame rate.
+    // Bidirectional camera lock. The `syncing` flag blocks the mirrored jumpTo from
+    // echoing back; MapLibre emits 'move' synchronously inside jumpTo, so the flag is
+    // still set when the echo arrives.
+    //
+    // Filtering on `e.originalEvent` instead is the other common fix, but it drops
+    // inertial panning and keyboard navigation, which carry no originalEvent — the
+    // maps would silently stop tracking after a flick-pan. The flag covers every
+    // movement type, so it is what we keep.
     const link = (from, to) => () => {
       if (syncing.current) return;
       syncing.current = true;
