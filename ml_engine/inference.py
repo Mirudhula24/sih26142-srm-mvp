@@ -13,11 +13,11 @@ from utils.mrf_smooth import mrf_smooth
 
 log = logging.getLogger(__name__)
 
-CLASSES = ["built_up", "water", "vegetation", "cropland", "bare_soil"]
+from taxonomy import CLASSES  # noqa: E402  single source of truth
 
 
 def build_model(
-    num_classes: int = 5,
+    num_classes: int = len(CLASSES),
     in_channels: int = 6,
     scale_factor: int = 4,
 ) -> SuperResolutionMapper:

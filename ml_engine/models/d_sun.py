@@ -34,7 +34,7 @@ class DeepSpectralUnmixingNetwork(nn.Module):
     def __init__(
         self,
         in_channels: int = 6,
-        num_classes: int = 5,
+        num_classes: int = 7,
         width: int = 64,
         depth: int = 4,
     ):

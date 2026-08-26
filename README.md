@@ -9,15 +9,28 @@ pixels are **spectrally unmixed** into fractional land-cover abundances and thos
 This is not perceptual upscaling. The pipeline enforces physical mass conservation — the output
 downsamples back to the original sensor abundances — so nothing is hallucinated.
 
-## Target classes (C = 5)
+## Target classes (C = 7)
 
 | Class | Description |
 |---|---|
-| `built_up` | Concrete structures, buildings, tarmac, paved roads |
+| `built_up` | Concrete structures, buildings, roofing, urban shadow |
+| `road` | Asphalt, tarmac, paved transport surfaces |
 | `water` | Rivers, lakes, reservoirs, coastal margins |
 | `vegetation` | Tree canopy, forest, dense green cover |
 | `cropland` | Cultivated fields, seasonal pasture, farmland |
-| `bare_soil` | Unpaved earth, rock, cleared land |
+| `bare_soil` | Unpaved earth, tilled ground, cleared land |
+| `sand` | Beach, dune, riverbank |
+
+Roads are their own class rather than part of built-up: a road network is a distinct
+intelligence product from a building footprint, and detecting *changes to road networks*
+is meaningless if the two are pooled. Sand is split from bare soil because beach and
+riverbank are named coastal features in the problem statement and are spectrally
+distinct from tilled earth.
+
+Seven is also the ceiling, not a preference. Unmixing solves six band equations plus the
+sum-to-one constraint, so at most seven endmembers are resolvable; beyond that the system
+is underdetermined and the solver returns whichever of infinitely many exact fits its
+initialisation reaches. See `ml_engine/taxonomy.py`.
 
 ## Physical constraints
 
@@ -202,7 +215,7 @@ scripts/      Weight download, offline cache builder, GPU check, benchmarks
 | Inference, 256×256 coarse tile | < 8 s (T4), < 5 s (RTX 3090) |
 | Tile serving latency | < 300 ms |
 | Client canvas frame rate | ≥ 45 FPS while panning / dragging the slider |
-| mIoU across 5 classes | ≥ 0.70 |
+| mIoU across 7 classes | ≥ 0.70 |
 | Abundance mass conservation | \|Σ_c A - 1\| < 1e-3 per pixel |
 | GPU memory footprint | ≤ 8 GB VRAM |
 

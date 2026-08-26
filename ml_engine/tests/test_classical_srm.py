@@ -9,11 +9,14 @@ import torch
 
 from models.classical_srm import CLASSES, project_to_simplex, super_resolve, unmix_fcls
 
-# Band order B02 B03 B04 B08 B11 B12.
+# Band order B02 B03 B04 B08 B11 B12. One probe per class, taken from the taxonomy so
+# these cannot silently drift from the endmembers the solver actually uses.
 SPECTRA = {
     "water": [0.035, 0.045, 0.030, 0.012, 0.006, 0.004],
     "vegetation": [0.028, 0.055, 0.032, 0.400, 0.180, 0.075],
-    "bare_soil": [0.110, 0.150, 0.200, 0.270, 0.340, 0.300],
+    "bare_soil": [0.080, 0.105, 0.140, 0.190, 0.260, 0.230],
+    "road": [0.055, 0.062, 0.070, 0.080, 0.090, 0.075],
+    "sand": [0.185, 0.240, 0.300, 0.360, 0.420, 0.375],
 }
 
 
@@ -23,7 +26,7 @@ def patch(spectrum, size=24, noise=0.004):
 
 
 def test_simplex_projection_enforces_both_constraints():
-    v = torch.randn(500, 5) * 3.0
+    v = torch.randn(500, len(CLASSES)) * 3.0
     p = project_to_simplex(v)
     assert (p >= 0).all(), "non-negativity (ANC) violated"
     assert torch.allclose(p.sum(1), torch.ones(500), atol=1e-5), "sum-to-one (ASC) violated"
@@ -60,6 +63,15 @@ def test_output_depends_on_the_input():
         "the imagery"
     )
     assert dists["water"][CLASSES.index("water")] > 0.8
+
+
+def test_road_is_its_own_class():
+    """Roads are a separate intelligence product, not a subset of built-up."""
+    assert "road" in CLASSES
+    a = unmix_fcls(patch(SPECTRA["road"])).mean(dim=(1, 2))
+    road = a[CLASSES.index("road")].item()
+    built = a[CLASSES.index("built_up")].item()
+    assert road > built, f"asphalt read as built_up ({built:.2f}) over road ({road:.2f})"
 
 
 def test_allocation_conserves_abundance_quotas():

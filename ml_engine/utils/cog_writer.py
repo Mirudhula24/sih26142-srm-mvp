@@ -12,18 +12,12 @@ from rasterio.transform import Affine
 from rio_cogeo.cogeo import cog_translate
 from rio_cogeo.profiles import cog_profiles
 
-CLASSES = ["built_up", "water", "vegetation", "cropland", "bare_soil"]
+import sys
 
-# Display palette. Must match LAND_COVER_CLASSES in frontend/src/lib/constants.js.
-CLASS_COLORS = {
-    0: (214, 96, 77),    # built_up
-    1: (33, 102, 172),   # water
-    2: (27, 120, 55),    # vegetation
-    3: (166, 219, 108),  # cropland
-    4: (191, 165, 122),  # bare_soil
-}
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from taxonomy import CLASSES, COLORS, NODATA  # noqa: E402
 
-NODATA = 255
+CLASS_COLORS = {i: COLORS[name] for i, name in enumerate(CLASSES)}
 
 
 def write_cog(

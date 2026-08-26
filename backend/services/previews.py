@@ -15,13 +15,15 @@ from config import get_settings
 
 NODATA = 255
 
-# Must match ml_engine/utils/cog_writer.py and frontend/src/lib/constants.js.
+# Must match ml_engine/taxonomy.py COLORS, in the same class order.
 CLASS_COLORS = {
-    0: (214, 96, 77),    # built_up
-    1: (33, 102, 172),   # water
-    2: (27, 120, 55),    # vegetation
-    3: (166, 219, 108),  # cropland
-    4: (191, 165, 122),  # bare_soil
+    0: (214, 96, 77),    # built_up   brick red
+    1: (78, 78, 84),     # road       dark grey
+    2: (33, 102, 172),   # water      blue
+    3: (27, 120, 55),    # vegetation dark green
+    4: (166, 219, 108),  # cropland   light green
+    5: (140, 109, 70),   # bare_soil  brown
+    6: (232, 216, 160),  # sand       pale
 }
 
 

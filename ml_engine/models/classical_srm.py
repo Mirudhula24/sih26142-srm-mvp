@@ -17,59 +17,27 @@ Its value is not just that it works untrained. Every output is traceable to meas
 spectra and an explicit objective, so nothing can be hallucinated — which is exactly the
 property the project claims. The learned model is the accuracy upgrade on top.
 """
+import os
+import sys
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
 
-CLASSES = ["built_up", "water", "vegetation", "cropland", "bare_soil"]
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Representative Sentinel-2 L2A surface reflectance endmembers, band order
-# B02 (490 nm), B03 (560), B04 (665), B08 (842), B11 (1610), B12 (2190).
-#
-# Several classes need more than one endmember, because a single spectrum cannot cover
-# the range of materials inside them -- the standard MESMA argument. The two that matter
-# most for Indian scenes:
-#
-#   * Built-up splits into bright concrete and dark asphalt. They sit at opposite ends of
-#     the reflectance range, and a concrete-only endmember misses roads entirely, which
-#     is precisely the "narrow linear structures" case the problem statement is about.
-#   * Water splits into clear and sediment-laden. Turbid water is the norm in Indian
-#     rivers, tanks and coastal margins, and reads far brighter in red than clear water.
-#
-# Each row is one endmember; ENDMEMBER_CLASS maps it back to an output class, and the
-# abundances of endmembers sharing a class are summed after unmixing.
-_ENDMEMBER_TABLE = [
-    #  name                  B02    B03    B04    B08    B11    B12     class
-    ("concrete / roofing", [0.140, 0.155, 0.175, 0.200, 0.250, 0.230], "built_up"),
-    ("asphalt / tarmac",   [0.075, 0.085, 0.095, 0.105, 0.115, 0.100], "built_up"),
-    # Building shadow. Without it, dense urban blocks classify as water: both are dark
-    # in the visible. Shadow is not black: it is lit by blue-rich diffuse skylight and
-    # by bounce from nearby surfaces, so it keeps several times the NIR and SWIR of clear
-    # water, which is what separates them. Set it darker than this and it starts stealing
-    # from genuine water -- at [0.035, 0.040, 0.035, 0.045, 0.030, 0.022] a pure-water
-    # pixel unmixes to only 69% water. It belongs to built_up, being cast by it.
-    ("building shadow",    [0.085, 0.090, 0.088, 0.115, 0.100, 0.080], "built_up"),
-    ("clear water",        [0.035, 0.045, 0.030, 0.012, 0.006, 0.004], "water"),
-    ("turbid water",       [0.060, 0.085, 0.075, 0.040, 0.018, 0.012], "water"),
-    ("dense vegetation",   [0.028, 0.055, 0.032, 0.400, 0.180, 0.075], "vegetation"),
-    ("cropland",           [0.045, 0.075, 0.070, 0.300, 0.230, 0.130], "cropland"),
-    ("bright sand",        [0.150, 0.200, 0.260, 0.330, 0.400, 0.360], "bare_soil"),
-    ("dark soil",          [0.080, 0.105, 0.140, 0.190, 0.260, 0.230], "bare_soil"),
-]
+from taxonomy import CLASSES, ENDMEMBER_CLASS, ENDMEMBER_SPECTRA  # noqa: E402
 
-ENDMEMBER_NAMES = [row[0] for row in _ENDMEMBER_TABLE]
-ENDMEMBER_CLASS = [CLASSES.index(row[2]) for row in _ENDMEMBER_TABLE]
-ENDMEMBERS = torch.tensor([row[1] for row in _ENDMEMBER_TABLE], dtype=torch.float32).T
+ENDMEMBERS = torch.tensor(ENDMEMBER_SPECTRA, dtype=torch.float32).T  # (bands, endmembers)
 
 
 def collapse_to_classes(endmember_abundances: torch.Tensor) -> torch.Tensor:
     """Sum endmember abundances into their output classes.
 
-    Summing preserves the sum-to-one property exactly: the endmember abundances already
-    sum to 1, and every endmember belongs to exactly one class.
+    Summing preserves sum-to-one exactly: the endmember abundances already sum to 1 and
+    each endmember belongs to exactly one class.
     """
-    e, h, w = endmember_abundances.shape
+    _, h, w = endmember_abundances.shape
     out = torch.zeros(len(CLASSES), h, w, dtype=endmember_abundances.dtype,
                       device=endmember_abundances.device)
     index = torch.tensor(ENDMEMBER_CLASS, device=endmember_abundances.device)
@@ -112,12 +80,23 @@ def unmix_fcls(
     spectra: torch.Tensor,
     endmembers: Optional[torch.Tensor] = None,
     iterations: int = 200,
+    sparsity: float = 0.006,
 ) -> torch.Tensor:
     """Fully constrained least squares unmixing.
 
-    Minimises ||E a - x||^2 over the simplex, by projected gradient descent. The step
-    size is 1/L with L the largest eigenvalue of E^T E, which is the standard choice
-    that guarantees monotone descent.
+    Minimises ||E a - x||^2 - sparsity * sum(a log a) over the simplex, by projected
+    gradient descent. Note the sign: sum(a log a) is largest at the simplex vertices and
+    smallest at the uniform point, so it is *maximised* to encourage purity. The step size is 1/L with L the largest eigenvalue of E^T E, the
+    standard choice that guarantees monotone descent on the quadratic part.
+
+    The entropy term is not cosmetic. Grey materials are spectrally flat, so concrete and
+    asphalt can be reproduced almost exactly by mixing dark water with bright sand -- the
+    residual is near zero either way and plain least squares has no reason to prefer the
+    physically correct answer. A pure asphalt probe unmixed to 39% water before this term
+    was added. Penalising entropy pushes the solution toward a single dominant endmember,
+    which is what a genuinely pure pixel should look like. Keep the weight small: too
+    large and true mixed pixels get forced to a vertex, destroying the sub-pixel
+    fractions that are the entire point.
 
     Args:
         spectra: (B, H, W) surface reflectance.
@@ -140,6 +119,8 @@ def unmix_fcls(
 
     for _ in range(iterations):
         grad = a @ gram - xe
+        if sparsity:
+            grad = grad - sparsity * (torch.log(a.clamp(min=1e-8)) + 1.0)
         a = project_to_simplex(a - step * grad)
 
     return collapse_to_classes(a.T.reshape(c, h, w))

@@ -4,12 +4,17 @@ from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Mirrors ml_engine/taxonomy.py, which is the source of truth. The two services are
+# separate deployment units and cannot import from each other, so this list must be
+# changed alongside it -- the /health endpoint exposes it for cross-checking.
 LAND_COVER_CLASSES: List[str] = [
     "built_up",
+    "road",
     "water",
     "vegetation",
     "cropland",
     "bare_soil",
+    "sand",
 ]
 
 # 10 m VNIR + 20 m SWIR bands resampled onto the 10 m grid -> B = 6

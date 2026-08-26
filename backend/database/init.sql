@@ -47,10 +47,12 @@ CREATE TABLE IF NOT EXISTS class_metrics (
     metric_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     job_id          UUID REFERENCES srm_jobs(job_id) ON DELETE CASCADE,
     built_up_sqm    DOUBLE PRECISION DEFAULT 0,
+    road_sqm        DOUBLE PRECISION DEFAULT 0,
     water_sqm       DOUBLE PRECISION DEFAULT 0,
     vegetation_sqm  DOUBLE PRECISION DEFAULT 0,
     cropland_sqm    DOUBLE PRECISION DEFAULT 0,
-    bare_soil_sqm   DOUBLE PRECISION DEFAULT 0
+    bare_soil_sqm   DOUBLE PRECISION DEFAULT 0,
+    sand_sqm        DOUBLE PRECISION DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_aois_geom ON user_aois USING GIST(geom);

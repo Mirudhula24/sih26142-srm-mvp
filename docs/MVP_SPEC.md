@@ -3,7 +3,9 @@
 ## In scope
 
 - Fixed 4x scale factor: each 10 m pixel becomes 16 sub-pixels at 2.5 m.
-- Five classes: `built_up`, `water`, `vegetation`, `cropland`, `bare_soil`.
+- Seven classes: `built_up`, `road`, `water`, `vegetation`, `cropland`, `bare_soil`,
+  `sand`. Roads were split out of built-up after review: a road network is a distinct
+  intelligence product. Seven is the resolvable ceiling for six bands plus sum-to-one.
 - STAC ingestion of Sentinel-2 L2A surface reflectance granules.
 - D-SUN spectral unmixing + SwinIR spatial allocation in PyTorch.
 - Dual-canvas web GIS with a synchronised curtain slider.

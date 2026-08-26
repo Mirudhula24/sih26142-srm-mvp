@@ -67,7 +67,7 @@ class SubPixelAllocationNetwork(nn.Module):
 
     def __init__(
         self,
-        num_classes: int = 5,
+        num_classes: int = 7,
         in_channels: int = 6,
         dim: int = 96,
         depth: int = 6,

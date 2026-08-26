@@ -83,9 +83,11 @@ class ClassMetrics(Base):
     metric_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     job_id = Column(UUID(as_uuid=True), ForeignKey("srm_jobs.job_id", ondelete="CASCADE"))
     built_up_sqm = Column(Float, default=0.0)
+    road_sqm = Column(Float, default=0.0)
     water_sqm = Column(Float, default=0.0)
     vegetation_sqm = Column(Float, default=0.0)
     cropland_sqm = Column(Float, default=0.0)
     bare_soil_sqm = Column(Float, default=0.0)
+    sand_sqm = Column(Float, default=0.0)
 
     job = relationship("SRMJob", back_populates="metrics")
