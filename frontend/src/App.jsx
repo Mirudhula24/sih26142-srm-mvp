@@ -3,14 +3,14 @@ import AnalyticsDrawer from './components/AnalyticsDrawer.jsx';
 import ControlPanel from './components/ControlPanel.jsx';
 import DualCanvasMap from './components/DualCanvasMap.jsx';
 import { fetchGranule, pollJob, startSRM } from './lib/api.js';
-import { TITILER_BASE } from './lib/constants.js';
+import { API_BASE } from './lib/constants.js';
 import { useSrmStore } from './store/useSrmStore.js';
 
 export default function App() {
   const { aoi, setAoi, granule, setGranule, job, setJob, status, setStatus, settings, requestCamera } =
     useSrmStore();
   const [error, setError] = useState(null);
-  const [outputTileUrl, setOutputTileUrl] = useState(null);
+  const [layers, setLayers] = useState({ input: null, output: null });
   const [drawMode, setDrawMode] = useState(false);
 
   const handleRegionSelect = (region) => {
@@ -65,14 +65,22 @@ export default function App() {
         scale_factor: settings.scaleFactor,
         apply_mrf_smoothing: settings.applyMrf,
       });
-      const finished = await pollJob(queued.job_id);
-      if (finished.status === 'FAILED') throw new Error('Inference failed.');
+      const finished = queued.status === 'COMPLETED' ? queued : await pollJob(queued.job_id);
+      if (finished.status === 'FAILED') {
+        throw new Error(finished.error || 'Inference failed.');
+      }
 
       setJob(finished);
-      setOutputTileUrl(
-        finished.tile_url_template ??
-          `${TITILER_BASE}/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png?url=/data/cogs/${finished.job_id}.tif`,
-      );
+      // Sync mode returns corner-pinned PNGs; the distributed stack returns a TiTiler
+      // tile template. Prefer whichever the API actually supplied.
+      if (finished.bounds && finished.output_preview_url) {
+        setLayers({
+          input: { url: API_BASE + finished.input_preview_url, coordinates: finished.bounds },
+          output: { url: API_BASE + finished.output_preview_url, coordinates: finished.bounds },
+        });
+      } else if (finished.tile_url_template) {
+        setLayers({ input: null, output: finished.tile_url_template });
+      }
       setStatus('ready');
     } catch (e) {
       setError(e.message);
@@ -87,6 +95,20 @@ export default function App() {
         <span className="text-xs text-slate-300">
           {granule ? `${granule.granule_id} · ${granule.cloud_cover}% cloud` : 'No granule loaded'}
         </span>
+        {job?.data_source && (
+          <span
+            className={`rounded px-2 py-1 text-xs ${
+              job.data_source === 'stac' ? 'bg-emerald-700' : 'bg-amber-700'
+            }`}
+            title={
+              job.data_source === 'stac'
+                ? 'Imagery fetched live from the Sentinel-2 STAC catalogue'
+                : 'Imagery served from the local offline cache, not a fresh acquisition'
+            }
+          >
+            {job.data_source === 'stac' ? 'live STAC' : 'cached imagery'}
+          </span>
+        )}
         <span className="ml-auto rounded bg-slate-700 px-2 py-1 text-xs capitalize">{status}</span>
       </header>
 
@@ -104,8 +126,8 @@ export default function App() {
         />
         <main className="min-w-0 flex-1">
           <DualCanvasMap
-            inputTileUrl={granule?.preview_url}
-            outputTileUrl={outputTileUrl}
+            inputLayer={layers.input}
+            outputLayer={layers.output}
             drawMode={drawMode}
             onAoiDrawn={handleAoiDrawn}
           />

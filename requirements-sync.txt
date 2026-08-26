@@ -1,0 +1,18 @@
+# Dependencies for SYNC_MODE -- the single-process path that runs the whole pipeline
+# without Redis, Celery, Docker or a GPU. Deliberately unpinned: this is the develop-on-
+# your-own-laptop path, and pinning to the container's Python 3.10 wheels breaks it on
+# newer interpreters. The containers install the pinned backend/ and ml_engine/ files.
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+rasterio
+rio-cogeo
+affine
+shapely
+pystac-client
+planetary-computer
+pillow
+numpy
+# Install torch separately for your platform, e.g.
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu

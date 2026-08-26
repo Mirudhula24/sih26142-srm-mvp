@@ -57,8 +57,10 @@ def write_cog(
         "nodata": NODATA,
     }
     with rasterio.open(tmp, "w", **profile) as dst:
-        dst.write(classes.astype(np.uint8), 1)
+        # Colormap first: GDAL cannot change PhotometricInterpretation after the first
+        # pixels are written, and warns while silently dropping the palette.
         dst.write_colormap(1, {k: (*v, 255) for k, v in CLASS_COLORS.items()})
+        dst.write(classes.astype(np.uint8), 1)
 
     # Nearest-neighbour overviews: averaging categorical class ids would invent classes
     # that the model never predicted.

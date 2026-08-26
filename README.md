@@ -73,7 +73,39 @@ abundance constraints held.
 cd ml_engine && python -m pytest tests -q
 ```
 
-### 2. Full platform, GPU
+### 2. Sync mode — the whole pipeline, one process
+
+No Redis, no Celery, no Docker, no GPU. The API runs ingestion and inference inline, and
+serves the map overlays itself, so the full flow works on a laptop.
+
+```bash
+pip install -r requirements-sync.txt
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+```
+
+Then two terminals:
+
+```bash
+SYNC_MODE=true DEVICE=cpu COG_STORAGE_DIR=../storage/cogs python -m uvicorn main:app --port 8000 --app-dir backend
+```
+
+```bash
+npm run dev --prefix frontend
+```
+
+Open http://localhost:3000, pick a region or draw a box, and press Execute. A real
+Sentinel-2 granule is fetched from the Planetary Computer STAC API, unmixed, allocated to
+a 2.5 m sub-pixel grid, and returned as a georeferenced COG plus map overlays. Expect
+roughly 40-55 s per job on a laptop CPU, most of it STAC search and band reads.
+
+The AOI is capped at 192x192 coarse pixels in this mode (`MAX_COARSE_PX` in
+`backend/services/pipeline.py`); larger boxes are cropped to their centre.
+
+Sync mode calls the same ingestion, inference and export functions as the workers, so a
+bug found here is a real bug. What it does not exercise is the queueing, the container
+split or the tile server.
+
+### 3. Full platform, GPU
 
 Prerequisites: Docker Engine 24+, Compose 2.20+, NVIDIA Container Toolkit, and an NVIDIA
 GPU with 8 GB VRAM or more (RTX 3080/3090/4090, T4, A10G). An RTX 3080 is `sm_86` and is
@@ -93,7 +125,7 @@ docker compose run --rm ml_worker python scripts/check_gpu.py
 If that fails, [`docs/GPU_SETUP.md`](docs/GPU_SETUP.md) walks the three verification
 steps and the usual causes.
 
-### 3. Full platform, CPU
+### 4. Full platform, CPU
 
 For machines with no NVIDIA runtime registered, or a GPU below the 8 GB target. Builds
 on slim Python with CPU torch wheels instead of the ~6 GB CUDA image, and drops the GPU

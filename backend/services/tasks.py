@@ -14,23 +14,36 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from celery import Celery, chain
-
 from config import get_settings
 from schemas import SRMResponse
 
 log = logging.getLogger(__name__)
 settings = get_settings()
 
-celery_app = Celery(
-    "srm",
-    broker=settings.celery_broker_url,
-    backend=settings.celery_result_backend,
-)
-celery_app.conf.task_routes = {
-    "srm.ingest": {"queue": "ingest"},
-    "srm.infer": {"queue": "inference"},
-}
+# Celery is only needed for the distributed path. Sync mode runs without a broker
+# installed at all, so its absence must not stop the API from importing.
+try:
+    from celery import Celery, chain
+
+    celery_app = Celery(
+        "srm",
+        broker=settings.celery_broker_url,
+        backend=settings.celery_result_backend,
+    )
+    celery_app.conf.task_routes = {
+        "srm.ingest": {"queue": "ingest"},
+        "srm.infer": {"queue": "inference"},
+    }
+    CELERY_AVAILABLE = True
+except ImportError:  # pragma: no cover - exercised only in sync-mode installs
+    celery_app = None
+    chain = None
+    CELERY_AVAILABLE = False
+
+    def _task_stub(*_args, **_kwargs):
+        def wrap(fn):
+            return fn
+        return wrap
 
 # In-memory job mirror. The authoritative record lives in PostGIS (`srm_jobs`); this
 # keeps status polling cheap during a demo.
@@ -50,7 +63,7 @@ def known_bbox(granule_id: str) -> Optional[List[float]]:
     return _GRANULE_BBOX.get(granule_id)
 
 
-@celery_app.task(name="srm.ingest")
+@(celery_app.task(name="srm.ingest") if CELERY_AVAILABLE else _task_stub())
 def ingest_task(
     job_id: str,
     granule_id: str,
@@ -125,6 +138,11 @@ def dispatch_srm_job(
 ) -> str:
     """Queue ingest -> infer and return the job id to poll."""
     job_id = f"job_srm_{uuid.uuid4().hex[:12]}"
+    if not CELERY_AVAILABLE:
+        raise RuntimeError(
+            "Celery is not installed, so the distributed path is unavailable. "
+            "Set SYNC_MODE=true to run ingestion and inference in-process."
+        )
 
     workflow = chain(
         celery_app.signature(
@@ -152,11 +170,16 @@ def dispatch_srm_job(
     return job_id
 
 
+def record_job(job: SRMResponse) -> None:
+    """Store a job the sync path has already finished."""
+    _JOBS[job.job_id] = job
+
+
 def get_job_status(job_id: str) -> Optional[SRMResponse]:
     job = _JOBS.get(job_id)
     if job is None:
         return None
-    if job.status in ("COMPLETED", "FAILED"):
+    if job.status in ("COMPLETED", "FAILED") or job_id not in _TASK_IDS:
         return job
 
     result = celery_app.AsyncResult(_TASK_IDS[job_id])

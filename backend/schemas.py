@@ -44,6 +44,18 @@ class SRMRequest(BaseModel):
 class SRMResponse(BaseModel):
     job_id: str
     status: Literal["PENDING", "RUNNING", "COMPLETED", "FAILED"]
+    # Where the imagery came from: a live STAC query or the local demo cache. Surfaced so
+    # the UI can never present cached imagery as a fresh acquisition.
+    data_source: Optional[Literal["stac", "cache"]] = None
+    granule_id: Optional[str] = None
+    cloud_cover: Optional[float] = None
+    error: Optional[str] = None
+    mass_conservation_error: Optional[float] = None
+    fine_pixel_size_m: Optional[float] = None
+    # Corner coordinates (tl, tr, br, bl) for the map overlays used without TiTiler.
+    bounds: Optional[List[List[float]]] = None
+    input_preview_url: Optional[str] = None
+    output_preview_url: Optional[str] = None
     execution_time_seconds: Optional[float] = None
     cog_output_url: Optional[str] = None
     tile_url_template: Optional[str] = None

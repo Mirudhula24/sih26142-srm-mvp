@@ -31,7 +31,7 @@ const rectangle = (a, b) => ({
  * MapLibre is pinned to v3.6 LTS: v4 changed the internal WebGL camera matrices and
  * loses context when Deck.gl shares the canvas. See docs/TECH_CLASHES.md (Clash 4).
  */
-export default function DualCanvasMap({ inputTileUrl, outputTileUrl, drawMode, onAoiDrawn }) {
+export default function DualCanvasMap({ inputLayer, outputLayer, drawMode, onAoiDrawn }) {
   const leftRef = useRef(null);
   const rightRef = useRef(null);
   const leftMap = useRef(null);
@@ -141,8 +141,8 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl, drawMode, o
     eachMap((m) => m.getCanvas().style.setProperty('cursor', drawMode ? 'crosshair' : ''));
   }, [drawMode, eachMap]);
 
-  useEffect(() => { applyRaster(leftMap.current, 'input-raster', inputTileUrl); }, [inputTileUrl]);
-  useEffect(() => { applyRaster(rightMap.current, 'srm-raster', outputTileUrl); }, [outputTileUrl]);
+  useEffect(() => { applyRaster(leftMap.current, 'input-raster', inputLayer); }, [inputLayer]);
+  useEffect(() => { applyRaster(rightMap.current, 'srm-raster', outputLayer); }, [outputLayer]);
 
   // The curtain only tracks the pointer once the handle itself is grabbed. Listening on
   // the whole container made every map pan drag the slider too.
@@ -228,14 +228,31 @@ function attachDrawHandlers(map, drawModeRef, drawStart, onAoiDrawnRef) {
   });
 }
 
-function applyRaster(map, id, url) {
-  if (!map || !url) return;
+/**
+ * Add imagery to a canvas.
+ *
+ * Two shapes are accepted. A tile template is used when TiTiler is serving the COG.
+ * A `{url, coordinates}` pair becomes a MapLibre `image` source pinned to its four
+ * corners — that is how sync mode renders results with no tile server running.
+ */
+function applyRaster(map, id, layer) {
+  if (!map || !layer) return;
   const add = () => {
     if (map.getLayer(id)) map.removeLayer(id);
     if (map.getSource(id)) map.removeSource(id);
-    map.addSource(id, { type: 'raster', tiles: [url], tileSize: 256 });
+
+    if (typeof layer === 'string') {
+      map.addSource(id, { type: 'raster', tiles: [layer], tileSize: 256 });
+    } else if (layer.url && layer.coordinates) {
+      map.addSource(id, { type: 'image', url: layer.url, coordinates: layer.coordinates });
+    } else {
+      return;
+    }
     // Keep the AOI outline above any imagery added later.
-    map.addLayer({ id, type: 'raster', source: id }, map.getLayer(`${AOI_SRC}-fill`) ? `${AOI_SRC}-fill` : undefined);
+    map.addLayer(
+      { id, type: 'raster', source: id, paint: { 'raster-fade-duration': 0 } },
+      map.getLayer(`${AOI_SRC}-fill`) ? `${AOI_SRC}-fill` : undefined,
+    );
   };
   map.isStyleLoaded() ? add() : map.once('idle', add);
 }

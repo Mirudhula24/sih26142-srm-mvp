@@ -1,9 +1,11 @@
 """Job status, exports and analytics."""
+import os
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 from schemas import SRMResponse
-from services import exporter, tasks
+from services import exporter, previews, tasks
 
 router = APIRouter()
 
@@ -14,6 +16,17 @@ def get_job(job_id: str) -> SRMResponse:
     if job is None:
         raise HTTPException(404, f"Unknown job {job_id}")
     return job
+
+
+@router.get("/{job_id}/preview/{kind}.png")
+def preview(job_id: str, kind: str) -> FileResponse:
+    """Map overlay PNGs, used when no tile server is running."""
+    if kind not in ("input", "output"):
+        raise HTTPException(404, "Preview must be 'input' or 'output'.")
+    path = previews.path_for(job_id, kind)
+    if not os.path.exists(path):
+        raise HTTPException(404, f"No {kind} preview for job {job_id}")
+    return FileResponse(path, media_type="image/png")
 
 
 @router.get("/{job_id}/export.tif")

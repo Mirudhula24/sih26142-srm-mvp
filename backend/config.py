@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     max_cloud_cover: float = 10.0
     offline_mode: bool = False
 
+    sync_mode: bool = False
     scale_factor: int = 4
     titiler_base_url: str = "http://localhost:8001"
 
