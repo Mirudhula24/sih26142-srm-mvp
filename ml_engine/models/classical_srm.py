@@ -27,19 +27,55 @@ CLASSES = ["built_up", "water", "vegetation", "cropland", "bare_soil"]
 # Representative Sentinel-2 L2A surface reflectance endmembers, band order
 # B02 (490 nm), B03 (560), B04 (665), B08 (842), B11 (1610), B12 (2190).
 #
-# The discriminating features: water collapses in NIR/SWIR; vegetation has the red-edge
-# NIR spike; soil rises monotonically into the SWIR; built-up is spectrally flatter than
-# soil, which is the classic confusion pair and the reason B11/B12 are carried at all.
-ENDMEMBERS = torch.tensor(
-    [
-        [0.140, 0.155, 0.175, 0.200, 0.250, 0.230],  # built_up
-        [0.035, 0.045, 0.030, 0.012, 0.006, 0.004],  # water
-        [0.028, 0.055, 0.032, 0.400, 0.180, 0.075],  # vegetation
-        [0.045, 0.075, 0.070, 0.300, 0.230, 0.130],  # cropland
-        [0.110, 0.150, 0.200, 0.270, 0.340, 0.300],  # bare_soil
-    ],
-    dtype=torch.float32,
-).T  # -> (bands, classes)
+# Several classes need more than one endmember, because a single spectrum cannot cover
+# the range of materials inside them -- the standard MESMA argument. The two that matter
+# most for Indian scenes:
+#
+#   * Built-up splits into bright concrete and dark asphalt. They sit at opposite ends of
+#     the reflectance range, and a concrete-only endmember misses roads entirely, which
+#     is precisely the "narrow linear structures" case the problem statement is about.
+#   * Water splits into clear and sediment-laden. Turbid water is the norm in Indian
+#     rivers, tanks and coastal margins, and reads far brighter in red than clear water.
+#
+# Each row is one endmember; ENDMEMBER_CLASS maps it back to an output class, and the
+# abundances of endmembers sharing a class are summed after unmixing.
+_ENDMEMBER_TABLE = [
+    #  name                  B02    B03    B04    B08    B11    B12     class
+    ("concrete / roofing", [0.140, 0.155, 0.175, 0.200, 0.250, 0.230], "built_up"),
+    ("asphalt / tarmac",   [0.075, 0.085, 0.095, 0.105, 0.115, 0.100], "built_up"),
+    # Building shadow. Without it, dense urban blocks classify as water: both are dark
+    # in the visible. Shadow is not black: it is lit by blue-rich diffuse skylight and
+    # by bounce from nearby surfaces, so it keeps several times the NIR and SWIR of clear
+    # water, which is what separates them. Set it darker than this and it starts stealing
+    # from genuine water -- at [0.035, 0.040, 0.035, 0.045, 0.030, 0.022] a pure-water
+    # pixel unmixes to only 69% water. It belongs to built_up, being cast by it.
+    ("building shadow",    [0.085, 0.090, 0.088, 0.115, 0.100, 0.080], "built_up"),
+    ("clear water",        [0.035, 0.045, 0.030, 0.012, 0.006, 0.004], "water"),
+    ("turbid water",       [0.060, 0.085, 0.075, 0.040, 0.018, 0.012], "water"),
+    ("dense vegetation",   [0.028, 0.055, 0.032, 0.400, 0.180, 0.075], "vegetation"),
+    ("cropland",           [0.045, 0.075, 0.070, 0.300, 0.230, 0.130], "cropland"),
+    ("bright sand",        [0.150, 0.200, 0.260, 0.330, 0.400, 0.360], "bare_soil"),
+    ("dark soil",          [0.080, 0.105, 0.140, 0.190, 0.260, 0.230], "bare_soil"),
+]
+
+ENDMEMBER_NAMES = [row[0] for row in _ENDMEMBER_TABLE]
+ENDMEMBER_CLASS = [CLASSES.index(row[2]) for row in _ENDMEMBER_TABLE]
+ENDMEMBERS = torch.tensor([row[1] for row in _ENDMEMBER_TABLE], dtype=torch.float32).T
+
+
+def collapse_to_classes(endmember_abundances: torch.Tensor) -> torch.Tensor:
+    """Sum endmember abundances into their output classes.
+
+    Summing preserves the sum-to-one property exactly: the endmember abundances already
+    sum to 1, and every endmember belongs to exactly one class.
+    """
+    e, h, w = endmember_abundances.shape
+    out = torch.zeros(len(CLASSES), h, w, dtype=endmember_abundances.dtype,
+                      device=endmember_abundances.device)
+    index = torch.tensor(ENDMEMBER_CLASS, device=endmember_abundances.device)
+    out.index_add_(0, index, endmember_abundances)
+    return out
+
 
 _DIAG = 1.0 / (2.0**0.5)
 NEIGHBOUR_KERNEL = torch.tensor(
@@ -87,7 +123,9 @@ def unmix_fcls(
         spectra: (B, H, W) surface reflectance.
         endmembers: (B, C) matrix; defaults to ENDMEMBERS.
     Returns:
-        (C, H, W) abundances, non-negative and summing to 1 per pixel.
+        (C, H, W) per-class abundances, non-negative and summing to 1 per pixel.
+        Endmembers sharing a class are summed after solving, so a road pixel that is
+        part concrete and part asphalt still reports as built-up.
     """
     e = (ENDMEMBERS if endmembers is None else endmembers).to(spectra.device)
     b, h, w = spectra.shape
@@ -104,7 +142,7 @@ def unmix_fcls(
         grad = a @ gram - xe
         a = project_to_simplex(a - step * grad)
 
-    return a.T.reshape(c, h, w)
+    return collapse_to_classes(a.T.reshape(c, h, w))
 
 
 def allocate_by_swapping(
