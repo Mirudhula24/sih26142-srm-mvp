@@ -76,12 +76,22 @@ cd ml_engine && python -m pytest tests -q
 ### 2. Full platform, GPU
 
 Prerequisites: Docker Engine 24+, Compose 2.20+, NVIDIA Container Toolkit, and an NVIDIA
-GPU with 8 GB VRAM or more (RTX 3080/3090/4090, T4, A10G).
+GPU with 8 GB VRAM or more (RTX 3080/3090/4090, T4, A10G). An RTX 3080 is `sm_86` and is
+fully covered by the CUDA 12.1 wheels the image pins -- no changes needed.
 
 ```bash
 cp .env.example .env
 docker compose up --build -d
 ```
+
+Confirm the container actually sees the card, and that the model fits its VRAM:
+
+```bash
+docker compose run --rm ml_worker python scripts/check_gpu.py
+```
+
+If that fails, [`docs/GPU_SETUP.md`](docs/GPU_SETUP.md) walks the three verification
+steps and the usual causes.
 
 ### 3. Full platform, CPU
 
@@ -131,7 +141,7 @@ Then set `OFFLINE_MODE=true` in `.env`, or use the toggle in the UI header.
 ### Local development without Docker
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scriptsctivate
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv/Scripts/activate
 pip install -r backend/requirements.txt
 uvicorn backend.main:app --reload --port 8000
 cd frontend && npm install && npm run dev
@@ -150,7 +160,7 @@ data_cache/   Pre-cached offline demo granules (Delhi NCR, Kerala coastal, Rajas
 storage/cogs/     Generated Cloud-Optimized GeoTIFFs, shared with the TiTiler container
 storage/tensors/  Aligned tensors handed from the ingest worker to the GPU worker
 docs/         PRD, MVP spec, architecture, datasets, tech-clash mitigations, demo script
-scripts/      Weight download, offline cache builder, benchmarks
+scripts/      Weight download, offline cache builder, GPU check, benchmarks
 ```
 
 ## Acceptance benchmarks
@@ -171,6 +181,7 @@ scripts/      Weight download, offline cache builder, benchmarks
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — tech stack, UML component/sequence/class/deployment
 - [`docs/DATASETS.md`](docs/DATASETS.md) — free data sources and pre-trained checkpoints
 - [`docs/PIPELINE_HANDOFF.md`](docs/PIPELINE_HANDOFF.md) — how the aligned tensor crosses from the ingest worker to the GPU worker
+- [`docs/GPU_SETUP.md`](docs/GPU_SETUP.md) — target cards, container GPU passthrough, troubleshooting
 - [`docs/TECH_CLASHES.md`](docs/TECH_CLASHES.md) — four known integration conflicts and their fixes
 - [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) — 3-minute evaluation script and fallback matrix
 - [`docs/TEAM.md`](docs/TEAM.md) — six-member role allocation
