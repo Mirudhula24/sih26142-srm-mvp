@@ -7,7 +7,7 @@ export const LAND_COVER_CLASSES = [
   { id: 1, key: 'road',       label: 'Road / transport', color: '#4e4e54' },
   { id: 2, key: 'water',      label: 'Water',            color: '#2166ac' },
   { id: 3, key: 'vegetation', label: 'Vegetation',       color: '#1b7837' },
-  { id: 4, key: 'cropland',   label: 'Cropland',         color: '#a6db6c' },
+  { id: 4, key: 'cropland',   label: 'Cropland / grass',         color: '#a6db6c' },
   { id: 5, key: 'bare_soil',  label: 'Bare soil',        color: '#8c6d46' },
   { id: 6, key: 'sand',       label: 'Sand / beach',     color: '#e8d8a0' },
 ];

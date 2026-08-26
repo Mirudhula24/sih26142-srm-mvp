@@ -33,7 +33,7 @@ LABELS = {
     "road": "Road / transport",
     "water": "Water",
     "vegetation": "Vegetation",
-    "cropland": "Cropland",
+    "cropland": "Cropland / grass / scrub",
     "bare_soil": "Bare soil",
     "sand": "Sand / beach",
 }
@@ -65,7 +65,10 @@ ENDMEMBERS = [
     ("weathered asphalt",   [0.090, 0.098, 0.108, 0.118, 0.130, 0.112], "road"),
     ("surface water",       [0.042, 0.056, 0.040, 0.016, 0.008, 0.005], "water"),
     ("dense canopy",        [0.028, 0.055, 0.032, 0.400, 0.180, 0.075], "vegetation"),
-    ("cropland",            [0.052, 0.088, 0.082, 0.285, 0.245, 0.145], "cropland"),
+    # Also absorbs grassland and dry scrub: their moderate NIR sits between dense canopy
+    # and bare ground, and there is no eighth slot to give them. Guindy National Park --
+    # dry scrub forest -- reads ~41% here, which is this class doing its job, not farmland.
+    ("cropland / grass",    [0.052, 0.088, 0.082, 0.285, 0.245, 0.145], "cropland"),
     ("bare soil",           [0.105, 0.130, 0.185, 0.245, 0.320, 0.290], "bare_soil"),
     ("beach sand",          [0.185, 0.240, 0.300, 0.360, 0.420, 0.375], "sand"),
 ]
