@@ -26,7 +26,12 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from taxonomy import CLASSES, ENDMEMBER_CLASS, ENDMEMBER_SPECTRA  # noqa: E402
+from taxonomy import (  # noqa: E402
+    CLASSES,
+    ENDMEMBER_CLASS,
+    ENDMEMBER_SPECTRA,
+    LINEAR_CLASS_IDS,
+)
 
 ENDMEMBERS = torch.tensor(ENDMEMBER_SPECTRA, dtype=torch.float32).T  # (bands, endmembers)
 
@@ -46,10 +51,27 @@ def collapse_to_classes(endmember_abundances: torch.Tensor) -> torch.Tensor:
 
 
 _DIAG = 1.0 / (2.0**0.5)
+
+# Isotropic 8-neighbour attraction, inverse-distance weighted. Correct for area features.
 NEIGHBOUR_KERNEL = torch.tensor(
     [[_DIAG, 1.0, _DIAG],
      [1.0,   0.0, 1.0],
      [_DIAG, 1.0, _DIAG]],
+    dtype=torch.float32,
+)
+
+# Four orientations, each rewarding neighbours that lie *in line* with the sub-pixel.
+# Scoring a linear class by the best-matching orientation instead of the isotropic sum
+# is what lets a one-sub-pixel-wide road stay connected: under the isotropic kernel a
+# road sub-pixel scores poorly because six of its eight neighbours are off-road, so the
+# allocator scatters it into blobs.
+ORIENTED_KERNELS = torch.tensor(
+    [
+        [[0.0, 0.0, 0.0], [1.0, 0.0, 1.0], [0.0, 0.0, 0.0]],   # horizontal
+        [[0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]],   # vertical
+        [[_DIAG, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, _DIAG]],  # NW-SE
+        [[0.0, 0.0, _DIAG], [0.0, 0.0, 0.0], [_DIAG, 0.0, 0.0]],  # NE-SW
+    ],
     dtype=torch.float32,
 )
 
@@ -156,10 +178,19 @@ def allocate_by_swapping(
     kernel = NEIGHBOUR_KERNEL.to(a.device).view(1, 1, 3, 3).repeat(c, 1, 1, 1)
     prior = logits.clone()
 
+    oriented = ORIENTED_KERNELS.to(a.device).unsqueeze(1)      # (4, 1, 3, 3)
+    linear_ids = [i for i in LINEAR_CLASS_IDS if i < c]
+
     classes = allocate_subpixels(logits, a, s)
     for _ in range(iterations):
         onehot = F.one_hot(classes, num_classes=c).permute(0, 3, 1, 2).to(a.dtype)
         support = F.conv2d(onehot, kernel, padding=1, groups=c)
+
+        # Elongated classes are scored by their best-aligned orientation instead.
+        for cid in linear_ids:
+            band = onehot[:, cid : cid + 1]
+            aligned = F.conv2d(band, oriented, padding=1)       # (1, 4, H, W)
+            support[:, cid] = aligned.amax(dim=1)
         # The prior keeps a sub-pixel from drifting to a class its own spectrum rules
         # out just because the neighbours are numerous.
         logits = support + 0.5 * prior

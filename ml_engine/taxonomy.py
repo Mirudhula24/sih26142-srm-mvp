@@ -74,5 +74,14 @@ ENDMEMBER_NAMES = [row[0] for row in ENDMEMBERS]
 ENDMEMBER_SPECTRA = [row[1] for row in ENDMEMBERS]
 ENDMEMBER_CLASS = [CLASSES.index(row[2]) for row in ENDMEMBERS]
 
+# Classes whose real-world form is elongated. The sub-pixel allocator scores these with
+# oriented kernels and takes the best-aligned direction, rather than counting neighbours
+# in all directions equally. An isotropic score rewards compact blobs, which is right for
+# a field or a lake and wrong for a road: a road sub-pixel should be rewarded for having
+# neighbours *in line with it*, which is what reconstructs continuity across a corridor
+# only one or two sub-pixels wide.
+LINEAR_CLASSES = ["road"]
+LINEAR_CLASS_IDS = [CLASSES.index(c) for c in LINEAR_CLASSES]
+
 NUM_CLASSES = len(CLASSES)
 NODATA = 255
