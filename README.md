@@ -88,7 +88,8 @@ backend/      FastAPI gateway, STAC ingestion, preprocessing, COG export, PostGI
 ml_engine/    PyTorch D-SUN + SwinIR inference, unmixing losses, MRF smoothing
 frontend/     React 18 + Vite, MapLibre GL dual canvas, analytics drawer
 data_cache/   Pre-cached offline demo granules (Delhi NCR, Kerala coastal, Rajasthan arid)
-storage/cogs/ Generated Cloud-Optimized GeoTIFFs, shared with the TiTiler container
+storage/cogs/     Generated Cloud-Optimized GeoTIFFs, shared with the TiTiler container
+storage/tensors/  Aligned tensors handed from the ingest worker to the GPU worker
 docs/         PRD, MVP spec, architecture, datasets, tech-clash mitigations, demo script
 scripts/      Weight download, offline cache builder, benchmarks
 ```
@@ -110,6 +111,7 @@ scripts/      Weight download, offline cache builder, benchmarks
 - [`docs/MVP_SPEC.md`](docs/MVP_SPEC.md) — 48-hour scope boundaries and P0/P1/P2 priorities
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — tech stack, UML component/sequence/class/deployment
 - [`docs/DATASETS.md`](docs/DATASETS.md) — free data sources and pre-trained checkpoints
+- [`docs/PIPELINE_HANDOFF.md`](docs/PIPELINE_HANDOFF.md) — how the aligned tensor crosses from the ingest worker to the GPU worker
 - [`docs/TECH_CLASHES.md`](docs/TECH_CLASHES.md) — four known integration conflicts and their fixes
 - [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) — 3-minute evaluation script and fallback matrix
 - [`docs/TEAM.md`](docs/TEAM.md) — six-member role allocation

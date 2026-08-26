@@ -53,6 +53,8 @@ export default function App() {
       setStatus('processing');
       const queued = await startSRM({
         granule_id: scene.granule_id,
+        aoi_geojson: aoi,
+        max_cloud_cover: settings.maxCloudCover,
         scale_factor: settings.scaleFactor,
         apply_mrf_smoothing: settings.applyMrf,
       });

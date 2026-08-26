@@ -25,6 +25,7 @@ ml_engine/weights/*.safetensors
 # Geospatial artifacts
 storage/cogs/*.tif
 storage/cogs/*.tiff
+storage/tensors/*.npz
 data_cache/**/*.tif
 data_cache/**/*.tiff
 data_cache/**/*.SAFE/

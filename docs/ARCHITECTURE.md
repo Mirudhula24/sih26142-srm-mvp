@@ -33,7 +33,8 @@ API ──► PostGIS            INSERT srm_jobs (status PENDING)
 API ──► Redis/Celery       enqueue on `ingest`
 Ingest ──► STAC            query Sentinel-2 L2A, cloud < threshold
 Ingest ──► Ingest          resample SWIR 20m→10m, apply SCL mask, normalise → X (6,H,W)
-Ingest ──► ML worker       hand off aligned tensor via shared volume
+Ingest ──► storage/tensors write {job_id}.npz — tensor + valid_mask + affine + CRS
+Ingest ──► ML worker       Celery chain passes the .npz path (never the array itself)
 ML ──► GPU                 D-SUN unmixing → SwinIR allocation → MRF smoothing
 ML ──► storage/cogs        write COG with scaled affine + colormap
 API ──► PostGIS            UPDATE srm_jobs (status COMPLETED, metrics)

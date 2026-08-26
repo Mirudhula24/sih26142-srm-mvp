@@ -1,6 +1,7 @@
 """Offline demo fallback — pre-cached granules for three representative biomes.
 
 Used when the STAC query times out (venue Wi-Fi failure) or when OFFLINE_MODE=true.
+Populate with `python scripts/build_offline_cache.py` before the event.
 """
 import json
 import os
@@ -30,11 +31,39 @@ def nearest_cached_scene(bbox: List[float]) -> Optional[Dict]:
     candidates += [k for k in CACHED_REGIONS if k not in candidates]
 
     for key in candidates:
-        manifest = os.path.join(settings.data_cache_dir, key, "manifest.json")
+        region_dir = os.path.join(settings.data_cache_dir, key)
+        manifest = os.path.join(region_dir, "manifest.json")
         if os.path.exists(manifest):
             with open(manifest, encoding="utf-8") as fh:
                 data = json.load(fh)
             data.setdefault("cloud_cover", 0.0)
             data["region"] = key
+            data["region_dir"] = region_dir
             return data
     return None
+
+
+def band_sources(cached: Dict) -> Dict[str, str]:
+    """Resolve a cached manifest to something rasterio can open.
+
+    Prefers `band_files` — GeoTIFFs on local disk, which is what makes offline mode
+    genuinely offline. Falls back to the remote `band_urls` recorded in the manifest,
+    which still saves the STAC round-trip but needs the network.
+    """
+    files = cached.get("band_files")
+    if files:
+        region_dir = cached.get("region_dir", "")
+        resolved = {
+            band: path if os.path.isabs(path) else os.path.join(region_dir, path)
+            for band, path in files.items()
+        }
+        if all(os.path.exists(p) for p in resolved.values()):
+            return resolved
+
+    urls = cached.get("band_urls")
+    if not urls:
+        raise RuntimeError(
+            f"Cache for {cached.get('region')} has neither local band files nor band "
+            f"URLs. Re-run scripts/build_offline_cache.py."
+        )
+    return urls

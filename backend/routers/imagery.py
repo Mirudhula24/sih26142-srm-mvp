@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 
 from config import INPUT_BANDS, get_settings
 from schemas import FetchRequest, FetchResponse
-from services import offline_cache, stac_fetcher
+from services import offline_cache, stac_fetcher, tasks
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -23,6 +23,7 @@ def fetch_granule(req: FetchRequest) -> FetchResponse:
                 date_range=f"{req.date_range.start}/{req.date_range.end}",
                 max_cloud=req.max_cloud_cover,
             )
+            tasks.remember_granule_bbox(scene["scene_id"], bbox)
             return FetchResponse(
                 status="SUCCESS",
                 granule_id=scene["scene_id"],
@@ -36,6 +37,7 @@ def fetch_granule(req: FetchRequest) -> FetchResponse:
     scene = offline_cache.nearest_cached_scene(bbox)
     if scene is None:
         raise HTTPException(404, "No live granule and no cached scene covers this AOI.")
+    tasks.remember_granule_bbox(scene["scene_id"], scene.get("bbox", bbox))
     return FetchResponse(
         status="FALLBACK_CACHE",
         granule_id=scene["scene_id"],

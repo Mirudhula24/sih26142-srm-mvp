@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     cog_storage_dir: str = "/data/cogs"
     data_cache_dir: str = "/data/cache"
+    tensor_exchange_dir: str = "/data/tensors"
 
     stac_endpoint: str = "https://planetarycomputer.microsoft.com/api/stac/v1"
     stac_collection: str = "sentinel-2-l2a"

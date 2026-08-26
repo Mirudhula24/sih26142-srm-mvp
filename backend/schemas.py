@@ -33,6 +33,9 @@ class FetchResponse(BaseModel):
 
 class SRMRequest(BaseModel):
     granule_id: str
+    # Optional: the gateway falls back to the bbox recorded during /imagery/fetch.
+    aoi_geojson: Optional[GeoJSONPolygon] = None
+    max_cloud_cover: Optional[float] = Field(None, ge=0.0, le=100.0)
     scale_factor: Literal[4, 8] = 4
     target_classes: List[str] = Field(default_factory=lambda: list(LAND_COVER_CLASSES))
     apply_mrf_smoothing: bool = True

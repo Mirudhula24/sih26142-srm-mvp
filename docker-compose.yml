@@ -60,6 +60,7 @@ services:
     volumes:
       - ./backend:/app
       - ./storage/cogs:/data/cogs
+      - ./storage/tensors:/data/tensors
       - ./data_cache:/data/cache:ro
     depends_on:
       - redis
@@ -73,6 +74,7 @@ services:
     volumes:
       - ./ml_engine:/app
       - ./storage/cogs:/data/cogs
+      - ./storage/tensors:/data/tensors
     depends_on:
       - redis
     deploy:
