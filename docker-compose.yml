@@ -1,0 +1,115 @@
+name: sih26142-srm
+
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-srm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-srm_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-srm}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-srm} -d ${POSTGRES_DB:-srm}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgis
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - ./storage/cogs:/data/cogs
+      - ./data_cache:/data/cache:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgis:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Ingestion worker is deliberately a SEPARATE container from the PyTorch worker:
+  # GDAL/OpenCV and PyTorch both ship their own OpenMP pools and thrash the CPU when
+  # co-located. See docs/TECH_CLASHES.md (Clash 1).
+  ingest_worker:
+    build:
+      context: ./backend
+    command: celery -A services.tasks worker -Q ingest -c 2 --loglevel=info
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgis
+    volumes:
+      - ./backend:/app
+      - ./storage/cogs:/data/cogs
+      - ./data_cache:/data/cache:ro
+    depends_on:
+      - redis
+      - postgis
+
+  ml_worker:
+    build:
+      context: ./ml_engine
+    command: celery -A worker worker -Q inference -c 1 --loglevel=info
+    env_file: .env
+    volumes:
+      - ./ml_engine:/app
+      - ./storage/cogs:/data/cogs
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Official pre-built TiTiler image, isolated from the PyTorch process so CUDA
+  # allocations can never block its asyncio event loop. See docs/TECH_CLASHES.md (Clash 3).
+  titiler:
+    image: ghcr.io/developmentseed/titiler:latest
+    environment:
+      PORT: 8001
+      CPL_VSIL_CURL_ALLOWED_EXTENSIONS: ".tif,.TIF,.tiff"
+      GDAL_CACHEMAX: "200"
+      GDAL_DISABLE_READDIR_ON_OPEN: "EMPTY_DIR"
+    volumes:
+      - ./storage/cogs:/data/cogs:ro
+    ports:
+      - "8001:8001"
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+      VITE_TITILER_BASE_URL: http://localhost:8001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

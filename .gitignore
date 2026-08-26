@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+
+# Env / secrets
+.env
+.env.local
+
+# Model weights (tracked via Git LFS or downloaded by scripts/download_weights.py)
+ml_engine/weights/*.pth
+ml_engine/weights/*.pt
+ml_engine/weights/*.safetensors
+
+# Geospatial artifacts
+storage/cogs/*.tif
+storage/cogs/*.tiff
+data_cache/**/*.tif
+data_cache/**/*.tiff
+data_cache/**/*.SAFE/
+*.jp2
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
