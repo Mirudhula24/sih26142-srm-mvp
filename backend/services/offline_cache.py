@@ -13,6 +13,10 @@ CACHED_REGIONS = {
     "delhi_ncr": {"label": "Delhi NCR — urban / industrial", "bbox": [76.84, 28.40, 77.35, 28.88]},
     "kerala_coastal": {"label": "Kerala — coastal / water", "bbox": [75.75, 9.90, 76.40, 10.45]},
     "rajasthan_arid": {"label": "Rajasthan — arid / bare soil", "bbox": [72.80, 26.10, 73.40, 26.60]},
+    # The other three regions all fall in UTM 43N. Chennai sits in 44N, so it is the
+    # only cached scene that exercises a second CRS end to end -- reprojection bugs are
+    # invisible until a granule crosses zones.
+    "chennai_coastal": {"label": "Chennai — coastal / port / urban", "bbox": [80.15, 12.90, 80.35, 13.15]},
 }
 
 

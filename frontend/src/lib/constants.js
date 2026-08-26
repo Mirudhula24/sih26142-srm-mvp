@@ -14,4 +14,5 @@ export const CACHED_REGIONS = [
   { key: 'delhi_ncr',      label: 'Delhi NCR — urban',    center: [77.10, 28.70], zoom: 12 },
   { key: 'kerala_coastal', label: 'Kerala — coastal',     center: [76.05, 10.15], zoom: 12 },
   { key: 'rajasthan_arid', label: 'Rajasthan — arid',     center: [73.05, 26.30], zoom: 12 },
+  { key: 'chennai_coastal', label: 'Chennai — port',     center: [80.25, 13.02], zoom: 12 },
 ];

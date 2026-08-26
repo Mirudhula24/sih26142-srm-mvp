@@ -18,7 +18,12 @@ SCL_INVALID = {0, 1, 3, 8, 9, 10, 11}  # nodata, saturated, shadow, cloud med/hi
 REFLECTANCE_SCALE = 10_000.0
 
 
-def _read_window(href: str, bbox_wgs84: List[float], out_shape: Tuple[int, int] = None):
+def _read_window(
+    href: str,
+    bbox_wgs84: List[float],
+    out_shape: Tuple[int, int] = None,
+    resampling: Resampling = Resampling.bilinear,
+):
     with rasterio.open(href) as src:
         left, bottom, right, top = transform_bounds("EPSG:4326", src.crs, *bbox_wgs84)
         window = from_bounds(left, bottom, right, top, src.transform)
@@ -27,9 +32,11 @@ def _read_window(href: str, bbox_wgs84: List[float], out_shape: Tuple[int, int] 
             1,
             window=window,
             out_shape=shape,
-            # Guided-filter style upsampling for the 20 m SWIR channels; bilinear is the
-            # rasterio-native approximation and keeps band registration exact.
-            resampling=Resampling.bilinear,
+            # Bilinear for continuous reflectance -- a rasterio-native stand-in for the
+            # guided-filter upsampling of the 20 m SWIR channels, which keeps band
+            # registration exact. Categorical rasters MUST override this; see the SCL
+            # read in build_input_tensor.
+            resampling=resampling,
         )
         return data, src.window_transform(window), src.crs
 
@@ -47,7 +54,15 @@ def build_input_tensor(band_urls: Dict[str, str], bbox_wgs84: List[float]) -> Di
 
     valid = np.ones((height, width), dtype=bool)
     if "SCL" in band_urls:
-        scl, _, _ = _read_window(band_urls["SCL"], bbox_wgs84, out_shape=(height, width))
+        # Nearest, never bilinear: SCL holds categorical class codes, and interpolating
+        # them invents values that exist in no class. Cloud (9) beside vegetation (4)
+        # would average to 6 -- read as "water", and the cloud silently escapes the mask.
+        scl, _, _ = _read_window(
+            band_urls["SCL"],
+            bbox_wgs84,
+            out_shape=(height, width),
+            resampling=Resampling.nearest,
+        )
         valid = ~np.isin(scl.astype(np.uint8), list(SCL_INVALID))
 
     x = np.clip(x, 0.0, 1.0)

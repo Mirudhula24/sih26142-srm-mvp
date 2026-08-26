@@ -20,6 +20,9 @@ routes, PostGIS schema, dual-canvas UI shell, Compose for GPU and CPU, 7 passing
 5. Job state lives in in-process dicts; the `srm_jobs` table is never written.
 6. mIoU is never computed — no evaluation script.
 7. `data_cache/` is empty; the Docker images have never been built.
+8. No baseline comparison — nothing shows SRM beating bicubic upscaling, which is the
+   claim the whole project rests on.
+9. No CI, no auth, no rate limiting (the PRD assumes all three).
 
 Items 1 and 2 block every visual result. Everything else runs in parallel.
 
