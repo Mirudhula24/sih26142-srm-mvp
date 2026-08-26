@@ -8,7 +8,7 @@ const fmt = (n) => new Intl.NumberFormat('en-IN', { maximumFractionDigits: 1 }).
 export default function AnalyticsDrawer({ job }) {
   if (!job || job.status !== 'COMPLETED') {
     return (
-      <aside className="w-80 shrink-0 border-l border-slate-200 bg-white p-4 text-sm text-slate-500">
+      <aside className="w-60 shrink-0 border-l border-slate-200 bg-white p-4 text-sm text-slate-500 xl:w-80">
         Run a mapping job to see the land-cover breakdown.
       </aside>
     );
@@ -25,7 +25,7 @@ export default function AnalyticsDrawer({ job }) {
   const urls = exportUrls(job.job_id);
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-4">
+    <aside className="flex w-60 shrink-0 flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-4 xl:w-80">
       <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         Class distribution
       </h2>

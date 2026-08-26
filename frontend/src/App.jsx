@@ -7,13 +7,14 @@ import { TITILER_BASE } from './lib/constants.js';
 import { useSrmStore } from './store/useSrmStore.js';
 
 export default function App() {
-  const { aoi, setAoi, granule, setGranule, job, setJob, status, setStatus, settings, setCamera } =
+  const { aoi, setAoi, granule, setGranule, job, setJob, status, setStatus, settings, requestCamera } =
     useSrmStore();
   const [error, setError] = useState(null);
   const [outputTileUrl, setOutputTileUrl] = useState(null);
+  const [drawMode, setDrawMode] = useState(false);
 
   const handleRegionSelect = (region) => {
-    setCamera({ center: region.center, zoom: region.zoom, bearing: 0, pitch: 0 });
+    requestCamera({ center: region.center, zoom: region.zoom });
     const [lon, lat] = region.center;
     const d = 0.03;
     setAoi({
@@ -24,6 +25,12 @@ export default function App() {
         [lon - d, lat - d],
       ]],
     });
+  };
+
+  const handleAoiDrawn = (polygon) => {
+    setAoi(polygon);
+    setDrawMode(false);
+    setError(null);
   };
 
   const handleUploadGeoJSON = async (file) => {
@@ -92,9 +99,16 @@ export default function App() {
           onRun={handleRun}
           onRegionSelect={handleRegionSelect}
           onUploadGeoJSON={handleUploadGeoJSON}
+          drawMode={drawMode}
+          onToggleDraw={() => setDrawMode((d) => !d)}
         />
         <main className="min-w-0 flex-1">
-          <DualCanvasMap inputTileUrl={granule?.preview_url} outputTileUrl={outputTileUrl} />
+          <DualCanvasMap
+            inputTileUrl={granule?.preview_url}
+            outputTileUrl={outputTileUrl}
+            drawMode={drawMode}
+            onAoiDrawn={handleAoiDrawn}
+          />
         </main>
         <AnalyticsDrawer job={job} />
       </div>
