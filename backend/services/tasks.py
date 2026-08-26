@@ -82,6 +82,7 @@ def ingest_task(
     from services import offline_cache, preprocessor, stac_fetcher, tensor_exchange
 
     band_source = None
+    boa_offset = -1000.0
     if not offline:
         try:
             scene = stac_fetcher.search_best_scene(
@@ -89,6 +90,7 @@ def ingest_task(
             )
             band_source = scene["band_urls"]
             granule_id = scene["scene_id"]
+            boa_offset = scene["boa_offset"]
         except Exception as exc:  # noqa: BLE001 — any network/STAC failure falls back
             log.warning("[%s] STAC ingest failed (%s); trying local cache", job_id, exc)
 
@@ -98,9 +100,10 @@ def ingest_task(
             raise RuntimeError("No live granule and no cached scene covers this AOI.")
         band_source = offline_cache.band_sources(cached)
         granule_id = cached["scene_id"]
+        boa_offset = cached.get("boa_offset", -1000.0)
         bbox = cached.get("bbox", bbox)
 
-    prepared = preprocessor.build_input_tensor(band_source, bbox)
+    prepared = preprocessor.build_input_tensor(band_source, bbox, boa_offset=boa_offset)
     tensor_path = tensor_exchange.save(
         job_id=job_id,
         tensor=prepared["tensor"],

@@ -36,3 +36,4 @@ data_cache/**/*.SAFE/
 Thumbs.db
 .idea/
 .vscode/
+storage/cogs/previews/*.png

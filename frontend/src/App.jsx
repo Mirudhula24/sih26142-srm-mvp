@@ -95,6 +95,20 @@ export default function App() {
         <span className="text-xs text-slate-300">
           {granule ? `${granule.granule_id} · ${granule.cloud_cover}% cloud` : 'No granule loaded'}
         </span>
+        {job?.method && (
+          <span
+            className={`rounded px-2 py-1 text-xs ${
+              job.method === 'learned' ? 'bg-indigo-700' : 'bg-slate-600'
+            }`}
+            title={
+              job.method === 'classical'
+                ? 'Constrained least-squares unmixing plus pixel swapping — no trained weights involved'
+                : 'Deep spectral unmixing with the Swin allocation head'
+            }
+          >
+            {job.method === 'classical' ? 'classical SRM' : 'deep SRM'}
+          </span>
+        )}
         {job?.data_source && (
           <span
             className={`rounded px-2 py-1 text-xs ${

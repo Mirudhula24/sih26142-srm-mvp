@@ -63,6 +63,7 @@ def _run_inline(req: SRMRequest, bbox) -> SRMResponse:
             scale_factor=req.scale_factor,
             apply_mrf=req.apply_mrf_smoothing,
             max_cloud=req.max_cloud_cover,
+            method=req.method,
         )
     except Exception as exc:  # noqa: BLE001 - surfaced to the UI rather than a 500
         log.exception("[%s] sync job failed", job_id)
@@ -79,6 +80,8 @@ def _run_inline(req: SRMRequest, bbox) -> SRMResponse:
         data_source=out["data_source"],
         granule_id=out["granule_id"],
         cloud_cover=out["cloud_cover"],
+        method=out["method"],
+        scale_factor=out["scale_factor"],
         execution_time_seconds=out["execution_time_seconds"],
         mass_conservation_error=out["mass_conservation_error"],
         fine_pixel_size_m=out["fine_pixel_size_m"],

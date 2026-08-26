@@ -66,6 +66,8 @@ def cache_region(key, out_root, date_range, max_cloud, size_deg, manifest_only):
     manifest = {
         "scene_id": scene["scene_id"],
         "cloud_cover": scene["cloud_cover"],
+        "boa_offset": scene["boa_offset"],
+        "processing_baseline": scene["processing_baseline"],
         "acquired": scene["acquired"],
         "bbox": window_bbox,
         "region_bbox": region["bbox"],

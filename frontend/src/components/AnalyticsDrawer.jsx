@@ -77,8 +77,21 @@ export default function AnalyticsDrawer({ job }) {
         </div>
         <div className="flex justify-between">
           <dt>Scale factor</dt>
-          <dd>4× (2.5 m)</dd>
+          <dd>
+            {job.scale_factor ? `${job.scale_factor}×` : '—'}
+            {job.fine_pixel_size_m ? ` (${job.fine_pixel_size_m} m)` : ''}
+          </dd>
         </div>
+        <div className="flex justify-between">
+          <dt>Solver</dt>
+          <dd>{job.method === 'classical' ? 'Classical SRM' : job.method === 'learned' ? 'Deep SRM' : '—'}</dd>
+        </div>
+        {job.mass_conservation_error != null && (
+          <div className="flex justify-between">
+            <dt>Mass error</dt>
+            <dd>{job.mass_conservation_error.toExponential(1)}</dd>
+          </div>
+        )}
       </dl>
 
       <div className="flex flex-col gap-2">

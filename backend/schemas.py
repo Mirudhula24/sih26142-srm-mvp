@@ -39,6 +39,9 @@ class SRMRequest(BaseModel):
     scale_factor: Literal[4, 8] = 4
     target_classes: List[str] = Field(default_factory=lambda: list(LAND_COVER_CLASSES))
     apply_mrf_smoothing: bool = True
+    # "auto" picks the classical solver when no trained weights are present, so an
+    # untrained deployment returns a real map rather than noise.
+    method: Literal["auto", "classical", "learned"] = "auto"
 
 
 class SRMResponse(BaseModel):
@@ -51,6 +54,9 @@ class SRMResponse(BaseModel):
     cloud_cover: Optional[float] = None
     error: Optional[str] = None
     mass_conservation_error: Optional[float] = None
+    # Which solver actually ran, so the UI never implies a trained model was used.
+    method: Optional[Literal["classical", "learned"]] = None
+    scale_factor: Optional[int] = None
     fine_pixel_size_m: Optional[float] = None
     # Corner coordinates (tl, tr, br, bl) for the map overlays used without TiTiler.
     bounds: Optional[List[List[float]]] = None

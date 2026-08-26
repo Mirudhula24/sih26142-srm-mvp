@@ -17,6 +17,13 @@ from config import INPUT_BANDS
 SCL_INVALID = {0, 1, 3, 8, 9, 10, 11}  # nodata, saturated, shadow, cloud med/high, cirrus, snow
 REFLECTANCE_SCALE = 10_000.0
 
+# Sentinel-2 processing baseline 04.00 (from 25 Jan 2022) shifted L2A digital numbers by
+# BOA_ADD_OFFSET = -1000. Divide by 10000 without applying it and every reflectance comes
+# out exactly 0.1 too high -- enough to make open water spectrally indistinguishable from
+# concrete, and enough to invalidate any physical unmixing built on it.
+#     reflectance = (DN + BOA_ADD_OFFSET) / 10000
+BOA_ADD_OFFSET = -1000.0
+
 
 def _read_window(
     href: str,
@@ -41,15 +48,24 @@ def _read_window(
         return data, src.window_transform(window), src.crs
 
 
-def build_input_tensor(band_urls: Dict[str, str], bbox_wgs84: List[float]) -> Dict:
-    """Read every band over the AOI, align to the 10 m grid, mask clouds, normalise."""
+def build_input_tensor(
+    band_urls: Dict[str, str],
+    bbox_wgs84: List[float],
+    boa_offset: float = BOA_ADD_OFFSET,
+) -> Dict:
+    """Read every band over the AOI, align to the 10 m grid, mask clouds, normalise.
+
+    `boa_offset` defaults to the baseline-04.00 value, which is correct for every
+    granule acquired since January 2022. Pass 0.0 for older archive data.
+    """
     ref, transform, crs = _read_window(band_urls["B04"], bbox_wgs84)
     height, width = ref.shape
 
     stack = []
     for band in INPUT_BANDS:
         data, _, _ = _read_window(band_urls[band], bbox_wgs84, out_shape=(height, width))
-        stack.append(data.astype(np.float32) / REFLECTANCE_SCALE)
+        reflectance = (data.astype(np.float32) + boa_offset) / REFLECTANCE_SCALE
+        stack.append(reflectance)
     x = np.stack(stack, axis=0)
 
     valid = np.ones((height, width), dtype=bool)

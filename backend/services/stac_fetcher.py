@@ -55,8 +55,14 @@ def search_best_scene(
             "width": src.width,
         }
 
+    # Baseline 04.00+ carries BOA_ADD_OFFSET = -1000; older archive data does not.
+    baseline = str(best.properties.get("s2:processing_baseline", "99.99"))
+    boa_offset = -1000.0 if baseline >= "04.00" else 0.0
+
     return {
         "scene_id": best.id,
+        "processing_baseline": baseline,
+        "boa_offset": boa_offset,
         "cloud_cover": float(best.properties["eo:cloud_cover"]),
         "acquired": best.properties.get("datetime"),
         "band_urls": band_urls,

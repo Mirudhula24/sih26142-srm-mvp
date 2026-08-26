@@ -78,6 +78,7 @@ def resolve_bands(bbox: List[float], max_cloud: Optional[float]) -> Dict:
                 "band_urls": scene["band_urls"],
                 "granule_id": scene["scene_id"],
                 "cloud_cover": scene["cloud_cover"],
+                "boa_offset": scene["boa_offset"],
                 "source": "stac",
             }
         except Exception as exc:  # noqa: BLE001
@@ -93,6 +94,7 @@ def resolve_bands(bbox: List[float], max_cloud: Optional[float]) -> Dict:
         "band_urls": offline_cache.band_sources(cached),
         "granule_id": cached["scene_id"],
         "cloud_cover": cached.get("cloud_cover", 0.0),
+        "boa_offset": cached.get("boa_offset", -1000.0),
         "source": "cache",
     }
 
@@ -103,6 +105,7 @@ def run_sync(
     scale_factor: int = 4,
     apply_mrf: bool = True,
     max_cloud: Optional[float] = None,
+    method: str = "auto",
 ) -> Dict:
     """Run the whole pipeline inline and return everything the UI needs."""
     from services import previews, preprocessor
@@ -113,7 +116,9 @@ def run_sync(
     started = time.perf_counter()
 
     resolved = resolve_bands(bbox, max_cloud)
-    prepared = preprocessor.build_input_tensor(resolved["band_urls"], bbox)
+    prepared = preprocessor.build_input_tensor(
+        resolved["band_urls"], bbox, boa_offset=resolved["boa_offset"]
+    )
     tensor, valid, transform = _clamp(
         prepared["tensor"], prepared["valid_mask"], prepared["transform"]
     )
@@ -121,7 +126,7 @@ def run_sync(
     model, device = _load_model(scale_factor)
     result = inference.run_srm(
         tensor, model, device, scale_factor=scale_factor, patch=MAX_COARSE_PX,
-        apply_mrf=apply_mrf,
+        apply_mrf=apply_mrf, method=method,
     )
     classes = result["classes"]
 
@@ -154,6 +159,8 @@ def run_sync(
         "data_source": resolved["source"],
         "cloud_cover": resolved["cloud_cover"],
         "cog_path": cog_path,
+        "method": result["method"],
+        "scale_factor": scale_factor,
         "execution_time_seconds": round(elapsed, 2),
         "inference_time_seconds": result["execution_time_seconds"],
         "mass_conservation_error": result["mass_conservation_error"],

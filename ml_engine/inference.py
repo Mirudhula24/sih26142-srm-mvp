@@ -35,13 +35,23 @@ def load_model(
 ) -> Tuple[SuperResolutionMapper, torch.device]:
     dev = torch.device(device if torch.cuda.is_available() else "cpu")
     model = build_model(scale_factor=scale_factor)
+    model.weights_loaded = False
     if weights_path and os.path.exists(weights_path):
         state = torch.load(weights_path, map_location=dev)
-        model.load_state_dict(state.get("model", state), strict=False)
-        log.info("Loaded SRM weights from %s", weights_path)
+        incompatible = model.load_state_dict(state.get("model", state), strict=False)
+        # strict=False tolerates a mismatched checkpoint silently, which is
+        # indistinguishable from random initialisation at inference time. Treat a load
+        # that populated nothing as no load at all.
+        loaded = len(list(model.state_dict())) - len(incompatible.missing_keys)
+        model.weights_loaded = loaded > 0
+        log.info("Loaded %d tensors of SRM weights from %s", loaded, weights_path)
+        if incompatible.missing_keys:
+            log.warning("%d parameters were NOT in the checkpoint and stay random",
+                        len(incompatible.missing_keys))
     else:
-        log.warning("No weights at %s — running with randomly initialised parameters.",
-                    weights_path)
+        log.warning(
+            "No weights at %s. The learned path would emit noise, so inference will "
+            "fall back to the classical SRM solver unless overridden.", weights_path)
     return model.to(dev).eval(), dev
 
 
@@ -54,6 +64,7 @@ def run_srm(
     patch: int = 256,
     overlap: int = 32,
     apply_mrf: bool = True,
+    method: str = "auto",
 ) -> Dict:
     """Super-resolve a (B=6, H, W) array to an (H*S, W*S) class map.
 
@@ -61,6 +72,14 @@ def run_srm(
     what keeps VRAM under the 8 GB budget and is the automatic mitigation for OOM during
     a live demo. Overlapping margins are trimmed on write-back so seams do not appear.
     """
+    # "auto" is the honest default: an untrained network produces a uniform class
+    # split that ignores the imagery entirely, so fall back to the classical solver
+    # rather than present noise as a result.
+    if method == "auto":
+        method = "learned" if getattr(model, "weights_loaded", False) else "classical"
+    if method == "classical":
+        return _run_classical(tensor, scale_factor, device)
+
     started = time.perf_counter()
     _, height, width = tensor.shape
     s = scale_factor
@@ -102,6 +121,30 @@ def run_srm(
         "abundances": abundance_sum,
         "execution_time_seconds": round(elapsed, 3),
         "mass_conservation_error": mass_error,
+        "method": "learned",
+    }
+
+
+@torch.no_grad()
+def _run_classical(tensor: np.ndarray, scale_factor: int, device) -> Dict:
+    """Constrained unmixing plus pixel swapping. No weights, no training."""
+    from models.classical_srm import super_resolve
+
+    started = time.perf_counter()
+    x = torch.from_numpy(tensor).to(device)
+    abundances, classes = super_resolve(x, scale_factor=scale_factor)
+
+    abundance_np = abundances.cpu().numpy()
+    elapsed = time.perf_counter() - started
+    mass_error = float(np.abs(abundance_np.sum(axis=0) - 1.0).max())
+    log.info("Classical SRM complete in %.2fs (mass error %.2e)", elapsed, mass_error)
+
+    return {
+        "classes": classes.cpu().numpy().astype(np.uint8),
+        "abundances": abundance_np,
+        "execution_time_seconds": round(elapsed, 3),
+        "mass_conservation_error": mass_error,
+        "method": "classical",
     }
 
 
