@@ -14,12 +14,30 @@ from config import INPUT_BANDS, get_settings
 _ASSET_KEYS = INPUT_BANDS + ["SCL"]
 
 
+MAX_AOI_DEGREES = 0.5  # ~50 km x 50 km (5000 x 5000 pixels at 10 m resolution)
+
+
+def validate_aoi_bbox(bbox: List[float]) -> None:
+    """Ensure the AOI bounding box is within safe memory limits (~50 km x 50 km)."""
+    min_lon, min_lat, max_lon, max_lat = bbox
+    width_deg = abs(max_lon - min_lon)
+    height_deg = abs(max_lat - min_lat)
+    if width_deg > MAX_AOI_DEGREES or height_deg > MAX_AOI_DEGREES:
+        raise ValueError(
+            f"Area of Interest (AOI) bounding box is too large ({width_deg:.2f}° × {height_deg:.2f}°). "
+            f"Maximum allowed size is {MAX_AOI_DEGREES}° × {MAX_AOI_DEGREES}° (~50 km × 50 km). "
+            f"Please select or draw a smaller region."
+        )
+
+
 def bbox_from_polygon(geojson: Dict) -> List[float]:
     """[min_lon, min_lat, max_lon, max_lat] from a GeoJSON Polygon."""
     ring = geojson["coordinates"][0]
     lons = [pt[0] for pt in ring]
     lats = [pt[1] for pt in ring]
-    return [min(lons), min(lats), max(lons), max(lats)]
+    bbox = [min(lons), min(lats), max(lons), max(lats)]
+    validate_aoi_bbox(bbox)
+    return bbox
 
 
 def search_best_scene(

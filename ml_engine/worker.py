@@ -62,6 +62,16 @@ def infer(payload: Dict) -> Dict:
 
     bundle = tensor_exchange.load(tensor_path)
     model, device = _get_model(scale_factor)
+    reference_abundances = None
+    if not getattr(model, "has_trained_weights", False):
+        reference_abundances = inference.worldcover_abundances(
+            bundle["bbox"], bundle["tensor"].shape[1], bundle["tensor"].shape[2], device
+        )
+    inference_mode = (
+        "trained_srm" if getattr(model, "has_trained_weights", False)
+        else "worldcover_reference" if reference_abundances is not None
+        else "spectral_baseline"
+    )
 
     log.info(
         "[%s] inferring on %s tile (valid %.1f%%)",
@@ -77,6 +87,7 @@ def infer(payload: Dict) -> Dict:
         scale_factor=scale_factor,
         patch=MAX_PATCH_SIZE,
         apply_mrf=apply_mrf,
+        reference_abundances=reference_abundances,
     )
     classes = result["classes"]
 
@@ -96,7 +107,9 @@ def infer(payload: Dict) -> Dict:
         scale_factor=scale_factor,
     )
 
-    fine_pixel_size = abs(bundle["transform"].a) / scale_factor
+    fine_pixel_size = cog_writer.ground_sample_distance_m(
+        bundle["transform"], bundle["crs"]
+    ) / scale_factor
     areas = cog_writer.class_areas(classes, fine_pixel_size)
     tensor_exchange.cleanup(tensor_path)
 
@@ -116,6 +129,10 @@ def infer(payload: Dict) -> Dict:
         "fine_pixel_size_m": fine_pixel_size,
         "execution_time_seconds": result["execution_time_seconds"],
         "mass_conservation_error": result["mass_conservation_error"],
+        # An mIoU is only meaningful against labelled validation data.  Do not
+        # fabricate a confidence/accuracy score for a production AOI.
+        "miou_score": None,
+        "inference_mode": inference_mode,
         "class_distribution_percent": {k: v["percent"] for k, v in areas.items()},
         "class_area_sqm": {k: v["area_sqm"] for k, v in areas.items()},
     }

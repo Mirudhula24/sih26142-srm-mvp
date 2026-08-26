@@ -4,6 +4,7 @@ If a judge asks "how do we know it isn't hallucinating?", these are the answer.
 """
 import torch
 
+from inference import spectral_abundances
 from models.d_sun import DeepSpectralUnmixingNetwork
 from models.swin_srm import SubPixelAllocationNetwork, allocate_subpixels
 from utils.mrf_smooth import mrf_smooth
@@ -62,3 +63,10 @@ def test_allocator_upscales_by_scale_factor():
     with torch.no_grad():
         out = net(torch.rand(1, B, 16, 16), torch.softmax(torch.randn(1, C, 16, 16), dim=1))
     assert out.shape == (1, C, 16 * S, 16 * S)
+
+
+def test_spectral_baseline_does_not_label_impervious_surface_as_bare_soil():
+    """Bright SWIR urban pixels must not trigger the former all-barren fallback."""
+    # B02, B03, B04, B08, B11, B12: representative low-NDVI impervious spectrum.
+    urban = torch.tensor([[[[0.18]], [[0.20]], [[0.24]], [[0.18]], [[0.30]], [[0.29]]]])
+    assert spectral_abundances(urban).argmax(dim=1).item() == 0

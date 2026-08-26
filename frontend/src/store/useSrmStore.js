@@ -14,6 +14,9 @@ export const useSrmStore = create((set) => ({
   aoi: null,
   setAoi: (aoi) => set({ aoi }),
 
+  drawMode: false,
+  setDrawMode: (drawMode) => set({ drawMode }),
+
   granule: null,
   setGranule: (granule) => set({ granule }),
 
@@ -28,4 +31,25 @@ export const useSrmStore = create((set) => ({
 
   settings: { scaleFactor: 4, applyMrf: true, maxCloudCover: 10 },
   setSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
+
+  selectedRegionKey: null,
+  setSelectedRegionKey: (selectedRegionKey) => set({ selectedRegionKey }),
+
+  controlOpen: true,
+  setControlOpen: (controlOpen) => set({ controlOpen }),
+  toggleControl: () => set((s) => ({ controlOpen: !s.controlOpen })),
+
+  analyticsOpen: true,
+  setAnalyticsOpen: (analyticsOpen) => set({ analyticsOpen }),
+  toggleAnalytics: () => set((s) => ({ analyticsOpen: !s.analyticsOpen })),
+
+  viewMode: 'compare', // 'compare' | 'satellite' | 'output'
+  setViewMode: (viewMode) => set({ viewMode }),
+
+  advancedOpen: false,
+  setAdvancedOpen: (advancedOpen) => set({ advancedOpen }),
+  toggleAdvanced: () => set((s) => ({ advancedOpen: !s.advancedOpen })),
+
+  stepState: { step: 0, percent: 0, elapsed: 0, eta: 0 },
+  setStepState: (stepState) => set((s) => ({ stepState: { ...s.stepState, ...stepState } })),
 }));

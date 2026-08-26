@@ -12,10 +12,15 @@ def process(req: SRMRequest) -> SRMResponse:
     """Dispatch ingest -> inference asynchronously; poll /api/v1/jobs/{job_id}."""
     # The ingest step needs a bbox. Take it from the request when the client sends one,
     # otherwise reuse whatever /imagery/fetch recorded for this granule.
-    if req.aoi_geojson is not None:
-        bbox = stac_fetcher.bbox_from_polygon(req.aoi_geojson.model_dump())
-    else:
-        bbox = tasks.known_bbox(req.granule_id)
+    try:
+        if req.aoi_geojson is not None:
+            bbox = stac_fetcher.bbox_from_polygon(req.aoi_geojson.model_dump())
+        else:
+            bbox = tasks.known_bbox(req.granule_id)
+            if bbox is not None:
+                stac_fetcher.validate_aoi_bbox(bbox)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
     if bbox is None:
         raise HTTPException(

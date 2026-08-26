@@ -49,5 +49,8 @@ class SRMResponse(BaseModel):
     tile_url_template: Optional[str] = None
     class_distribution_percent: Optional[Dict[str, float]] = None
     class_area_sqm: Optional[Dict[str, float]] = None
+    scale_factor: Optional[int] = None
     miou_score: Optional[float] = None
+    inference_mode: Optional[Literal["trained_srm", "worldcover_reference", "spectral_baseline"]] = None
     created_at: Optional[datetime] = None
+    error: Optional[str] = None

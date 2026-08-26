@@ -3,11 +3,13 @@
 Lives on the GPU worker because that is where the class map is produced; the backend
 only ever reads these files back (see backend/services/exporter.py).
 """
+import math
 import os
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import rasterio
+from rasterio.crs import CRS
 from rasterio.transform import Affine
 from rio_cogeo.cogeo import cog_translate
 from rio_cogeo.profiles import cog_profiles
@@ -24,6 +26,19 @@ CLASS_COLORS = {
 }
 
 NODATA = 255
+
+
+def ground_sample_distance_m(transform: Affine, crs: Union[str, CRS, None]) -> float:
+    """Pixel width in metres. Geographic CRS values are converted at the raster origin."""
+    width = abs(float(transform.a))
+    try:
+        crs_obj = CRS.from_user_input(crs) if crs is not None else None
+    except Exception:  # noqa: BLE001 — unparseable CRS, treat units as already metres
+        return width
+    if crs_obj is None or crs_obj.is_projected:
+        return width
+    lat = float(transform.f)
+    return width * 111_320.0 * max(0.05, abs(math.cos(math.radians(lat))))
 
 
 def write_cog(
@@ -55,6 +70,7 @@ def write_cog(
         "crs": crs,
         "transform": fine_transform,
         "nodata": NODATA,
+        "photometric": "PALETTE",
     }
     with rasterio.open(tmp, "w", **profile) as dst:
         dst.write(classes.astype(np.uint8), 1)

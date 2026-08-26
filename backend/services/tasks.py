@@ -68,6 +68,8 @@ def ingest_task(
     # should never load.
     from services import offline_cache, preprocessor, stac_fetcher, tensor_exchange
 
+    stac_fetcher.validate_aoi_bbox(bbox)
+
     band_source = None
     if not offline:
         try:
@@ -159,22 +161,36 @@ def get_job_status(job_id: str) -> Optional[SRMResponse]:
     if job.status in ("COMPLETED", "FAILED"):
         return job
 
-    result = celery_app.AsyncResult(_TASK_IDS[job_id])
-    if result.successful():
-        payload = result.result or {}
+    res = celery_app.AsyncResult(_TASK_IDS[job_id])
+    if res.successful():
+        payload = res.result or {}
         job.status = "COMPLETED"
         job.execution_time_seconds = payload.get("execution_time_seconds")
         job.class_distribution_percent = payload.get("class_distribution_percent")
         job.class_area_sqm = payload.get("class_area_sqm")
+        job.scale_factor = payload.get("scale_factor")
         job.miou_score = payload.get("miou_score")
+        job.inference_mode = payload.get("inference_mode")
         job.cog_output_url = f"/api/v1/jobs/{job_id}/export.tif"
         job.tile_url_template = (
             f"{settings.titiler_base_url}/cog/tiles/WebMercatorQuad/"
             f"{{z}}/{{x}}/{{y}}.png?url=/data/cogs/{job_id}.tif"
         )
-    elif result.failed():
-        job.status = "FAILED"
-        log.error("[%s] job failed: %s", job_id, result.result)
-    elif result.state == "STARTED":
-        job.status = "RUNNING"
+        return job
+
+    # Traverse chain tasks (srm.infer -> srm.ingest) to catch upstream failures/running states
+    curr = res
+    while curr is not None:
+        if curr.failed():
+            job.status = "FAILED"
+            err_msg = str(curr.result) if curr.result else "Job failed during processing."
+            if "WorkerLostError" in err_msg or "SIGKILL" in err_msg or "signal 9" in err_msg:
+                err_msg = "Job worker memory limit exceeded (OOM). Please select or draw a smaller Area of Interest (AOI)."
+            job.error = err_msg
+            log.error("[%s] job failed: %s", job_id, err_msg)
+            return job
+        if curr.state == "STARTED":
+            job.status = "RUNNING"
+        curr = curr.parent
+
     return job

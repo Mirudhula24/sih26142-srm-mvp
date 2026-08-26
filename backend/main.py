@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import LAND_COVER_CLASSES, get_settings
-from routers import imagery, jobs, srm
+from routers import analysis, imagery, jobs, srm
 
 logging.basicConfig(level=logging.INFO)
 settings = get_settings()
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(imagery.router, prefix="/api/v1/imagery", tags=["imagery"])
 app.include_router(srm.router, prefix="/api/v1/srm", tags=["srm"])
 app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["jobs"])
+app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["analysis"])
 
 
 @app.get("/health", tags=["system"])

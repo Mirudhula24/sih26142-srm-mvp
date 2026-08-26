@@ -117,9 +117,10 @@ everything with `docker compose down`.
 
 ### Before the output means anything
 
-`ml_engine/weights/` is empty in a fresh clone, so the model runs with **randomly
-initialised parameters** — the pipeline is exercised end to end and the physical
-constraints still hold, but the class map is noise. Get real weights first:
+`ml_engine/weights/` is empty in a fresh clone, so the worker uses a deterministic
+Sentinel-2 spectral baseline rather than random neural parameters. It avoids invalid
+random classifications, but it is not a calibrated accuracy model. Get real weights
+before treating a land-cover percentage as validated:
 
 ```bash
 pip install sen2sr mlstac

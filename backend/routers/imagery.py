@@ -14,7 +14,10 @@ router = APIRouter()
 @router.post("/fetch", response_model=FetchResponse)
 def fetch_granule(req: FetchRequest) -> FetchResponse:
     settings = get_settings()
-    bbox = stac_fetcher.bbox_from_polygon(req.aoi_geojson.model_dump())
+    try:
+        bbox = stac_fetcher.bbox_from_polygon(req.aoi_geojson.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
     if not settings.offline_mode:
         try:
