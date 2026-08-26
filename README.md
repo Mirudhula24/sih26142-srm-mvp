@@ -56,15 +56,45 @@ MRF smoothing pass that removes salt-and-pepper noise while preserving linear bo
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for components, sequence, class model and
 deployment topology.
 
-## Quickstart
+## Running
 
-Prerequisites: Docker Engine 24+, Docker Compose 2.20+, NVIDIA Container Toolkit, an NVIDIA GPU
-with ≥ 8 GB VRAM (RTX 3080/3090/4090 or T4/A10G). CPU-only runs work but miss the latency target.
+### 1. Model only, no infrastructure
+
+The fastest way to see the pipeline work. Needs only `torch` and `numpy`.
+
+```bash
+python scripts/benchmark.py --size 64 --runs 2
+```
+
+Prints per-run latency and the mass-conservation error. Anything under `1e-3` means the
+abundance constraints held.
+
+```bash
+cd ml_engine && python -m pytest tests -q
+```
+
+### 2. Full platform, GPU
+
+Prerequisites: Docker Engine 24+, Compose 2.20+, NVIDIA Container Toolkit, and an NVIDIA
+GPU with 8 GB VRAM or more (RTX 3080/3090/4090, T4, A10G).
 
 ```bash
 cp .env.example .env
 docker compose up --build -d
 ```
+
+### 3. Full platform, CPU
+
+For machines with no NVIDIA runtime registered, or a GPU below the 8 GB target. Builds
+on slim Python with CPU torch wheels instead of the ~6 GB CUDA image, and drops the GPU
+device reservation that would otherwise fail the whole stack.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.cpu.yml up --build
+```
+
+Inference will miss the < 8 s budget by a wide margin. That is expected — this mode
+exercises the pipeline, it does not measure it. Benchmark on the target GPU.
 
 | Service | URL |
 |---|---|
@@ -72,14 +102,43 @@ docker compose up --build -d
 | REST API docs | http://localhost:8000/docs |
 | TiTiler tile server | http://localhost:8001/docs |
 
-Local development without Docker:
+Tail a worker with `docker compose logs -f ml_worker` (or `ingest_worker`), and stop
+everything with `docker compose down`.
+
+### Before the output means anything
+
+`ml_engine/weights/` is empty in a fresh clone, so the model runs with **randomly
+initialised parameters** — the pipeline is exercised end to end and the physical
+constraints still hold, but the class map is noise. Get real weights first:
 
 ```bash
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install sen2sr mlstac
+python scripts/download_weights.py
+```
+
+See [`docs/DATASETS.md`](docs/DATASETS.md) for what to fine-tune on top of them.
+
+### Offline demo mode
+
+Cache real imagery before the event, so a dead venue network cannot break the demo:
+
+```bash
+python scripts/build_offline_cache.py --demo-size 0.05
+```
+
+Then set `OFFLINE_MODE=true` in `.env`, or use the toggle in the UI header.
+
+### Local development without Docker
+
+```bash
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scriptsctivate
 pip install -r backend/requirements.txt
 uvicorn backend.main:app --reload --port 8000
 cd frontend && npm install && npm run dev
 ```
+
+The API still needs Redis and PostGIS reachable; the simplest split is
+`docker compose up -d postgis redis titiler` alongside a locally run gateway.
 
 ## Repository layout
 

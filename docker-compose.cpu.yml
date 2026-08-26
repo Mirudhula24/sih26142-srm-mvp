@@ -1,0 +1,21 @@
+# CPU-only override -- for machines without an NVIDIA Container Toolkit setup, or with a
+# GPU below the 8 GB VRAM design target.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.cpu.yml up --build
+#
+# Inference falls back to the CPU and runs far slower than the < 8 s acceptance budget.
+# That is expected here: this configuration exercises the pipeline end to end, it does
+# not measure it. Benchmark on the target GPU.
+services:
+  ml_worker:
+    build:
+      context: ./ml_engine
+      dockerfile: Dockerfile.cpu
+    environment:
+      DEVICE: cpu
+      # Smaller tiles keep host RAM in check; the patch loop stitches them back together.
+      MAX_PATCH_SIZE: 128
+    # `!reset` removes the base file's GPU device reservation outright. A plain empty
+    # mapping would merge with it and leave the claim in place, which then fails hard
+    # when no NVIDIA runtime is registered.
+    deploy: !reset null

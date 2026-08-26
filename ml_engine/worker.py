@@ -22,6 +22,9 @@ celery_app = Celery(
 )
 
 COG_DIR = os.environ.get("COG_STORAGE_DIR", "/data/cogs")
+# Tile size fed to the network. Lower it to fit a smaller VRAM or RAM budget; the
+# patch loop stitches the results back together either way.
+MAX_PATCH_SIZE = int(os.environ.get("MAX_PATCH_SIZE", "256"))
 
 _MODEL = None
 _DEVICE = None
@@ -72,6 +75,7 @@ def infer(payload: Dict) -> Dict:
         model,
         device,
         scale_factor=scale_factor,
+        patch=MAX_PATCH_SIZE,
         apply_mrf=apply_mrf,
     )
     classes = result["classes"]

@@ -1,0 +1,25 @@
+# CPU variant of the inference worker. The CUDA base image is ~6 GB and pointless
+# without a GPU, so this builds on slim Python with the CPU torch wheels instead.
+FROM python:3.10-slim
+
+ENV OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    NUMEXPR_NUM_THREADS=1 \
+    PYTHONUNBUFFERED=1 \
+    DEVICE=cpu
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      gdal-bin libgdal-dev build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY requirements.txt .
+
+# CPU wheels only -- the default index would pull the full CUDA runtime.
+RUN pip install --no-cache-dir torch==2.2.2 --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["celery", "-A", "worker", "worker", "-Q", "inference", "-c", "1", "--loglevel=info"]
