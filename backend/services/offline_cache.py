@@ -13,6 +13,9 @@ CACHED_REGIONS = {
     "delhi_ncr": {"label": "Delhi NCR — urban / industrial", "bbox": [76.84, 28.40, 77.35, 28.88]},
     "kerala_coastal": {"label": "Kerala — coastal / water", "bbox": [75.75, 9.90, 76.40, 10.45]},
     "rajasthan_arid": {"label": "Rajasthan — arid / bare soil", "bbox": [72.80, 26.10, 73.40, 26.60]},
+    "chennai_coastal": {"label": "Chennai — coastal metro", "bbox": [80.10, 12.85, 80.35, 13.25]},
+    "hyderabad_urban": {"label": "Hyderabad — urban plateau", "bbox": [78.30, 17.25, 78.65, 17.55]},
+    "bangalore_urban": {"label": "Bangalore — urban tech corridor", "bbox": [77.45, 12.85, 77.75, 13.10]},
 }
 
 

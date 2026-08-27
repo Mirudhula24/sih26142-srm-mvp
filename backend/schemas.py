@@ -52,5 +52,7 @@ class SRMResponse(BaseModel):
     scale_factor: Optional[int] = None
     miou_score: Optional[float] = None
     inference_mode: Optional[Literal["trained_srm", "worldcover_reference", "spectral_baseline"]] = None
+    confidence_mean_percent: Optional[float] = None
+    high_uncertainty_percent: Optional[float] = None
     created_at: Optional[datetime] = None
     error: Optional[str] = None

@@ -4,9 +4,11 @@ Consumes the aligned tensor the ingest worker left on the shared volume, runs th
 pipeline, writes a georeferenced COG, and returns the metrics the UI displays.
 """
 import logging
+import math
 import os
 from typing import Dict
 
+import numpy as np
 from celery import Celery
 
 import inference
@@ -111,6 +113,7 @@ def infer(payload: Dict) -> Dict:
         bundle["transform"], bundle["crs"]
     ) / scale_factor
     areas = cog_writer.class_areas(classes, fine_pixel_size)
+    confidence = _abundance_confidence(result["abundances"], bundle["valid_mask"])
     tensor_exchange.cleanup(tensor_path)
 
     log.info(
@@ -135,4 +138,30 @@ def infer(payload: Dict) -> Dict:
         "inference_mode": inference_mode,
         "class_distribution_percent": {k: v["percent"] for k, v in areas.items()},
         "class_area_sqm": {k: v["area_sqm"] for k, v in areas.items()},
+        "confidence_mean_percent": confidence["confidence_mean_percent"],
+        "high_uncertainty_percent": confidence["high_uncertainty_percent"],
+    }
+
+
+def _abundance_confidence(abundances: np.ndarray, valid_mask: np.ndarray) -> Dict[str, float]:
+    """Reduce the (C, H, W) abundance stack to two headline confidence numbers.
+
+    Confidence = 1 - normalized Shannon entropy of the per-pixel class distribution.
+    A pure one-hot pixel scores 100%; a uniform distribution scores 0%. Cloud-masked
+    coarse pixels are excluded so they don't dilute the average.
+    """
+    if abundances.size == 0:
+        return {"confidence_mean_percent": 0.0, "high_uncertainty_percent": 0.0}
+    probs = np.clip(abundances, 1e-6, 1.0)
+    entropy = -(probs * np.log(probs)).sum(axis=0)
+    norm = entropy / math.log(abundances.shape[0])
+    if valid_mask is not None and valid_mask.shape == norm.shape:
+        norm = norm[valid_mask]
+    if norm.size == 0:
+        return {"confidence_mean_percent": 0.0, "high_uncertainty_percent": 0.0}
+    confidence = 1.0 - float(norm.mean())
+    high_uncertain = float((norm > 0.75).mean())
+    return {
+        "confidence_mean_percent": round(100.0 * confidence, 1),
+        "high_uncertainty_percent": round(100.0 * high_uncertain, 1),
     }

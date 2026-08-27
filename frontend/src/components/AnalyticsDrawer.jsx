@@ -82,7 +82,7 @@ export default function AnalyticsDrawer({ job }) {
       <button
         type="button"
         onClick={toggleAnalytics}
-        className="absolute right-3 top-16 z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700/60 bg-[#0f172a]/95 text-slate-200 shadow-xl backdrop-blur-md transition-all hover:bg-blue-600 hover:text-white cursor-pointer"
+        className="absolute right-3 top-16 z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-800 transition-colors hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
         title="Open Results & Analytics"
       >
         <ChevronLeft size={20} />
@@ -92,23 +92,23 @@ export default function AnalyticsDrawer({ job }) {
 
   if (!job || job.status !== 'COMPLETED') {
     return (
-      <aside className="relative flex w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-[#1e293b] bg-[#0b1329]/95 p-4 text-slate-400 backdrop-blur-lg z-20">
-        <div className="flex items-center justify-between border-b border-[#1e293b] pb-2.5">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <BarChart3 size={16} className="text-blue-400" /> Results & Analytics
+      <aside className="relative flex w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-4 text-slate-400 z-20">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+            <BarChart3 size={16} className="text-blue-600" /> Results & Analytics
           </h2>
           <button
             type="button"
             onClick={toggleAnalytics}
-            className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-700/50 bg-slate-800/60 text-slate-400 transition-all hover:bg-slate-700 hover:text-white cursor-pointer"
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-slate-400 transition-all hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
             title="Collapse Drawer"
           >
             <ChevronRight size={16} />
           </button>
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center py-16">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/60 text-slate-600">
-            <Layers size={24} className="animate-pulse" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300">
+            <Layers size={24} />
           </div>
           <p className="text-xs leading-relaxed text-slate-400 max-w-[200px]">
             Run a mapping analysis to populate land-cover metrics and download exports.
@@ -143,16 +143,16 @@ export default function AnalyticsDrawer({ job }) {
   };
 
   return (
-    <aside className="relative flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-[#1e293b] bg-[#0b1329]/95 p-4 text-slate-100 backdrop-blur-lg shadow-2xl transition-all duration-300 z-20">
+    <aside className="relative flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-slate-200 bg-white p-4 text-slate-900 z-20">
       {/* Header & Collapse Toggle */}
-      <div className="flex items-center justify-between border-b border-[#1e293b] pb-2.5">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-          <BarChart3 size={16} className="text-blue-400" /> Results & Analytics
+      <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+          <BarChart3 size={16} className="text-blue-600" /> Results & Analytics
         </h2>
         <button
           type="button"
           onClick={toggleAnalytics}
-          className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-700/50 bg-slate-800/60 text-slate-400 transition-all hover:bg-slate-700 hover:text-white cursor-pointer"
+          className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-slate-400 transition-all hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
           title="Collapse Drawer"
         >
           <ChevronRight size={16} />
@@ -162,31 +162,48 @@ export default function AnalyticsDrawer({ job }) {
       {/* Key Metrics Grid (4 Cards) */}
       <div className="flex flex-col gap-2">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Key Metrics</h3>
+        {typeof job.confidence_mean_percent === 'number' && (
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Model Confidence</span>
+              <span className="text-[10px] text-slate-400">
+                {typeof job.high_uncertainty_percent === 'number'
+                  ? `${fmt(job.high_uncertainty_percent)}% high-uncertainty pixels`
+                  : 'Per-pixel abundance entropy'}
+              </span>
+            </div>
+            <span className={`text-lg font-extrabold ${
+              job.confidence_mean_percent >= 80 ? 'text-emerald-600' :
+              job.confidence_mean_percent >= 60 ? 'text-amber-600' : 'text-rose-600'}`}>
+              {fmt(job.confidence_mean_percent)}%
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-2">
           {/* Card 1: Output Resolution */}
-          <div className="flex flex-col gap-0.5 rounded-xl border border-[#1e293b] bg-[#111c38]/60 p-2.5">
-            <span className="text-base font-extrabold text-cyan-300">{resM} m</span>
+          <div className="flex flex-col gap-0.5 rounded-xl border border-slate-200 bg-white p-2.5">
+            <span className="text-base font-extrabold text-cyan-700">{resM} m</span>
             <span className="text-[10px] text-slate-400 font-medium">Output Resolution</span>
           </div>
 
           {/* Card 2: Area Processed */}
-          <div className="flex flex-col gap-0.5 rounded-xl border border-[#1e293b] bg-[#111c38]/60 p-2.5">
-            <span className="text-base font-extrabold text-blue-400">{areaKm2 > 0 ? areaKm2 : '—'}{areaKm2 > 0 ? ' km²' : ''}</span>
+          <div className="flex flex-col gap-0.5 rounded-xl border border-slate-200 bg-white p-2.5">
+            <span className="text-base font-extrabold text-blue-600">{areaKm2 > 0 ? areaKm2 : '—'}{areaKm2 > 0 ? ' km²' : ''}</span>
             <span className="text-[10px] text-slate-400 font-medium">Area Processed</span>
           </div>
 
           {/* Card 3: Processing Time */}
-          <div className="flex flex-col gap-0.5 rounded-xl border border-[#1e293b] bg-[#111c38]/60 p-2.5">
-            <span className="text-base font-extrabold text-indigo-300">
+          <div className="flex flex-col gap-0.5 rounded-xl border border-slate-200 bg-white p-2.5">
+            <span className="text-base font-extrabold text-indigo-700">
               {job.execution_time_seconds ? `${job.execution_time_seconds.toFixed(0)}s` : '—'}
             </span>
             <span className="text-[10px] text-slate-400 font-medium">Processing Time</span>
           </div>
 
           {/* Card 4: Accuracy provenance */}
-          <div className="flex flex-col gap-0.5 rounded-xl border border-[#1e293b] bg-[#111c38]/60 p-2.5">
+          <div className="flex flex-col gap-0.5 rounded-xl border border-slate-200 bg-white p-2.5">
             <div className="flex items-center gap-1">
-              <span className={`text-sm font-extrabold ${isReference ? 'text-amber-400' : 'text-emerald-400'}`}>
+              <span className={`text-sm font-extrabold ${isReference ? 'text-amber-600' : 'text-emerald-600'}`}>
                 {isReference ? 'Reference data' : accuracy}
               </span>
             </div>
@@ -200,14 +217,14 @@ export default function AnalyticsDrawer({ job }) {
       {/* Land-Cover Distribution Donut Chart */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <ScanSearch size={14} className="text-cyan-400" />
+          <ScanSearch size={14} className="text-cyan-600" />
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Layer controls</h3>
         </div>
-        <p className="text-[10px] text-slate-500">Toggle classes to focus the analytics and inspector.</p>
+        <p className="text-[10px] text-slate-400">Toggle classes to focus the analytics and inspector.</p>
         <div className="grid grid-cols-2 gap-1.5">
           {LAND_COVER_CLASSES.map((layer) => (
             <button key={layer.key} type="button" onClick={() => toggleLayer(layer.key)}
-              className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-left text-[10px] font-semibold ${layers[layer.key] ? 'border-slate-600 bg-slate-800 text-white' : 'border-slate-800 bg-slate-950 text-slate-500'}`}>
+              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-left text-[10px] font-semibold transition-colors ${layers[layer.key] ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-500 hover:text-slate-900'}`}>
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: layer.color }} />{layer.label}
             </button>
           ))}
@@ -217,7 +234,7 @@ export default function AnalyticsDrawer({ job }) {
       {/* Land-Cover Distribution Donut Chart */}
       <div className="flex flex-col gap-2">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Land-Cover Distribution</h3>
-        <div className="h-44 w-full rounded-xl border border-[#1e293b] bg-[#111c38]/40 p-2">
+        <div className="h-44 w-full rounded-xl border border-slate-200 bg-[#faf7f2] p-2">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -254,40 +271,40 @@ export default function AnalyticsDrawer({ job }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-xl border border-[#1e293b] bg-[#111c38]/50 p-3">
-        <div className="flex items-center gap-2"><CalendarRange size={15} className="text-violet-400" /><h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Temporal change detection</h3></div>
+      <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center gap-2"><CalendarRange size={15} className="text-violet-600" /><h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Temporal change detection</h3></div>
         <p className="text-[10px] leading-relaxed text-slate-400">Compare calibrated 2024 and 2026 outputs before reporting urban expansion or vegetation loss.</p>
-        <button type="button" onClick={checkTemporal} className="rounded-lg border border-violet-700/60 bg-violet-950/40 px-2 py-1.5 text-[10px] font-semibold text-violet-200 hover:bg-violet-900/60">Check temporal readiness</button>
-        {temporalMessage && <p className="text-[10px] leading-relaxed text-amber-300">{temporalMessage}</p>}
+        <button type="button" onClick={checkTemporal} className="rounded-lg border border-violet-300 bg-violet-50 px-2 py-1.5 text-[10px] font-semibold text-violet-700 hover:bg-violet-100">Check temporal readiness</button>
+        {temporalMessage && <p className="text-[10px] leading-relaxed text-amber-700">{temporalMessage}</p>}
       </div>
 
-      <div className="flex flex-col gap-2 rounded-xl border border-[#1e293b] bg-[#111c38]/50 p-3">
-        <div className="flex items-center gap-2"><Bot size={15} className="text-cyan-400" /><h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Geo-assistant</h3></div>
-        <div className="flex gap-1.5"><input value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && askAssistant()} className="min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5 text-[10px] text-white outline-none focus:border-cyan-500" />
-          <button type="button" onClick={askAssistant} disabled={assistantBusy} className="rounded-md bg-cyan-700 px-2 text-[10px] font-bold text-white disabled:opacity-50">Ask</button></div>
-        {assistantAnswer && <p className="text-[10px] leading-relaxed text-slate-300">{assistantAnswer}</p>}
+      <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
+        <div className="flex items-center gap-2"><Bot size={15} className="text-cyan-600" /><h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Geo-assistant</h3></div>
+        <div className="flex gap-1.5"><input value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && askAssistant()} className="min-w-0 flex-1 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[10px] text-slate-900 outline-none focus:border-slate-900" />
+          <button type="button" onClick={askAssistant} disabled={assistantBusy} className="rounded-full bg-slate-900 px-3 text-[10px] font-bold text-white hover:bg-slate-800 disabled:opacity-50">Ask</button></div>
+        {assistantAnswer && <p className="text-[10px] leading-relaxed text-slate-700">{assistantAnswer}</p>}
       </div>
 
       {/* Detailed Breakdown Table */}
       <div className="flex flex-col gap-2">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Detailed Breakdown</h3>
-        <div className="overflow-hidden rounded-xl border border-[#1e293b] bg-[#111c38]/60">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-xs">
-            <thead className="border-b border-[#1e293b] bg-slate-900/60 text-slate-400 text-[10px]">
+            <thead className="border-b border-slate-200 bg-slate-50 text-slate-400 text-[10px]">
               <tr>
                 <th className="px-3 py-1.5 text-left font-semibold">Class</th>
                 <th className="px-3 py-1.5 text-right font-semibold">Area (km²)</th>
                 <th className="px-3 py-1.5 text-right font-semibold">Percentage</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1e293b]/60 text-[11px]">
+            <tbody className="divide-y divide-slate-200 text-[11px]">
               {data.map((d) => (
-                <tr key={d.name} className="transition-colors hover:bg-slate-800/40">
-                  <td className="flex items-center gap-2 px-3 py-1.5 font-medium text-slate-200">
+                <tr key={d.name} className="transition-colors hover:bg-slate-100">
+                  <td className="flex items-center gap-2 px-3 py-1.5 font-medium text-slate-800">
                     <span className="h-2 w-2 rounded-full" style={{ background: d.color }} />
                     {d.name}
                   </td>
-                  <td className="px-3 py-1.5 text-right font-mono text-slate-300">
+                  <td className="px-3 py-1.5 text-right font-mono text-slate-700">
                     {(d.sqm / 1_000_000).toFixed(2)}
                   </td>
                   <td className="px-3 py-1.5 text-right font-bold" style={{ color: d.color }}>
@@ -301,37 +318,37 @@ export default function AnalyticsDrawer({ job }) {
       </div>
 
       {/* Export Results */}
-      <div className="flex flex-col gap-2 pt-1 border-t border-[#1e293b]">
+      <div className="flex flex-col gap-2 pt-1 border-t border-slate-200">
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Export Results</h3>
 
         <a
           href={urls.geotiff}
           download
-          className="flex items-center justify-between rounded-xl border border-[#1e293b] bg-[#111c38]/80 px-3.5 py-2.5 text-xs transition-all hover:border-blue-500/60 hover:bg-blue-950/40 cursor-pointer shadow-sm"
+          className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs transition-all hover:border-blue-300 hover:bg-blue-50 cursor-pointer shadow-sm"
         >
           <div className="flex items-center gap-2.5">
-            <Layers size={16} className="text-blue-400" />
+            <Layers size={16} className="text-blue-600" />
             <div className="flex flex-col">
-              <span className="font-bold text-white">Download GeoTIFF</span>
+              <span className="font-bold text-slate-900">Download GeoTIFF</span>
               <span className="text-[10px] text-slate-400">High-resolution raster</span>
             </div>
           </div>
           <Download size={15} className="text-slate-400" />
         </a>
 
-        <a href={urls.executiveReport} download className="flex items-center justify-between rounded-xl border border-cyan-800/70 bg-cyan-950/25 px-3.5 py-2.5 text-xs transition-all hover:bg-cyan-950/50 cursor-pointer shadow-sm">
-          <div className="flex items-center gap-2.5"><FileText size={16} className="text-cyan-400" /><div className="flex flex-col"><span className="font-bold text-white">Executive PDF Report</span><span className="text-[10px] text-slate-400">Branded result summary</span></div></div><Download size={15} className="text-slate-400" />
+        <a href={urls.executiveReport} download className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs transition-all hover:border-cyan-300 hover:bg-cyan-50 cursor-pointer shadow-sm">
+          <div className="flex items-center gap-2.5"><FileText size={16} className="text-cyan-600" /><div className="flex flex-col"><span className="font-bold text-slate-900">Executive PDF Report</span><span className="text-[10px] text-slate-400">Branded result summary</span></div></div><Download size={15} className="text-slate-400" />
         </a>
 
         <a
           href={urls.geojson}
           download
-          className="flex items-center justify-between rounded-xl border border-[#1e293b] bg-[#111c38]/80 px-3.5 py-2.5 text-xs transition-all hover:border-indigo-500/60 hover:bg-indigo-950/40 cursor-pointer shadow-sm"
+          className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs transition-all hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer shadow-sm"
         >
           <div className="flex items-center gap-2.5">
-            <FileCode size={16} className="text-indigo-400" />
+            <FileCode size={16} className="text-indigo-600" />
             <div className="flex flex-col">
-              <span className="font-bold text-white">Export GeoJSON</span>
+              <span className="font-bold text-slate-900">Export GeoJSON</span>
               <span className="text-[10px] text-slate-400">Vector land-cover data</span>
             </div>
           </div>
@@ -341,12 +358,12 @@ export default function AnalyticsDrawer({ job }) {
         <a
           href={urls.csv}
           download
-          className="flex items-center justify-between rounded-xl border border-[#1e293b] bg-[#111c38]/80 px-3.5 py-2.5 text-xs transition-all hover:border-emerald-500/60 hover:bg-emerald-950/40 cursor-pointer shadow-sm"
+          className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs transition-all hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer shadow-sm"
         >
           <div className="flex items-center gap-2.5">
-            <FileText size={16} className="text-emerald-400" />
+            <FileText size={16} className="text-emerald-600" />
             <div className="flex flex-col">
-              <span className="font-bold text-white">Download Report (CSV)</span>
+              <span className="font-bold text-slate-900">Download Report (CSV)</span>
               <span className="text-[10px] text-slate-400">Complete analysis report</span>
             </div>
           </div>

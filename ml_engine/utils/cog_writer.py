@@ -18,7 +18,7 @@ CLASSES = ["built_up", "water", "vegetation", "cropland", "bare_soil"]
 
 # Display palette. Must match LAND_COVER_CLASSES in frontend/src/lib/constants.js.
 CLASS_COLORS = {
-    0: (214, 96, 77),    # built_up
+    0: (239, 68, 68),    # built_up
     1: (33, 102, 172),   # water
     2: (27, 120, 55),    # vegetation
     3: (166, 219, 108),  # cropland

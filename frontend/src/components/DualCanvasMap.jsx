@@ -238,7 +238,7 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl, onInspect, 
   };
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#070d1e] select-none">
+    <div className="relative h-full w-full overflow-hidden bg-[#f4efe8] select-none">
       <div ref={leftRef} className="absolute inset-0" />
       <div
         ref={rightRef}
@@ -247,7 +247,7 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl, onInspect, 
       />
 
       {/* Top View Switcher Segmented Control */}
-      <div className="absolute top-4 left-1/2 z-20 -translate-x-1/2 flex items-center rounded-2xl border border-slate-700/60 bg-[#0b1329]/90 p-1 shadow-2xl backdrop-blur-md">
+      <div className="absolute top-4 left-1/2 z-20 -translate-x-1/2 flex items-center rounded-2xl border border-slate-300 bg-white p-1">
         {[
           { key: 'satellite', label: 'Satellite Input' },
           { key: 'output', label: 'SRM Output (2.5m)' },
@@ -259,10 +259,10 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl, onInspect, 
               key={btn.key}
               type="button"
               onClick={() => handleViewChange(btn.key)}
-              className={`rounded-xl px-4 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               {btn.label}
@@ -272,27 +272,27 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl, onInspect, 
       </div>
 
       {/* Top Left Canvas Overlay Card */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-0.5 rounded-xl border border-slate-800/80 bg-[#0b1329]/90 px-3.5 py-2 text-xs backdrop-blur-md shadow-xl">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-0.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
           Satellite Input
         </span>
         <span className="text-[11px] text-slate-400 font-medium">10 m Resolution</span>
       </div>
 
       {/* Top Right Canvas Overlay Card */}
-      <div className="absolute top-4 right-16 z-10 flex flex-col gap-0.5 rounded-xl border border-blue-500/40 bg-[#0b1329]/90 px-3.5 py-2 text-xs backdrop-blur-md shadow-xl">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">
+      <div className="absolute top-4 right-16 z-10 flex flex-col gap-0.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
           {(10 / settings.scaleFactor).toFixed(1)}m SRM Output
         </span>
         <span className="text-[11px] text-slate-400 font-medium">{settings.scaleFactor}× Enhanced</span>
       </div>
 
       {/* Floating Right Map Controls Stack */}
-      <div className="absolute right-4 top-20 z-20 flex flex-col gap-1.5 rounded-xl border border-slate-800 bg-[#0b1329]/90 p-1 shadow-2xl backdrop-blur-md text-slate-300">
+      <div className="absolute right-4 top-20 z-20 flex flex-col gap-1.5 rounded-xl border border-slate-200 bg-white p-1 text-slate-700">
         <button
           type="button"
           onClick={() => handleZoom(1)}
-          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer text-sm font-bold"
+          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer text-sm font-bold"
           title="Zoom In"
         >
           +
@@ -300,16 +300,16 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl, onInspect, 
         <button
           type="button"
           onClick={() => handleZoom(-1)}
-          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer text-sm font-bold"
+          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer text-sm font-bold"
           title="Zoom Out"
         >
           −
         </button>
-        <div className="h-px bg-slate-800 my-0.5" />
+        <div className="h-px bg-slate-100 my-0.5" />
         <button
           type="button"
           onClick={handleRecenter}
-          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer text-xs"
+          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer text-xs"
           title="Recenter Map"
         >
           🎯
@@ -317,7 +317,7 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl, onInspect, 
         <button
           type="button"
           onClick={() => handleViewChange(viewMode === 'compare' ? 'satellite' : 'compare')}
-          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-blue-600 hover:text-white transition-colors cursor-pointer text-xs"
+          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer text-xs"
           title="Toggle Compare"
         >
           ↔
@@ -326,48 +326,48 @@ export default function DualCanvasMap({ inputTileUrl, outputTileUrl, onInspect, 
 
       {/* Split-Screen Slider Handle (< >) */}
       <div
-        className="absolute top-0 bottom-0 z-10 w-0.5 cursor-ew-resize bg-blue-500/80 shadow-2xl"
+        className="absolute top-0 bottom-0 z-10 w-0.5 cursor-ew-resize bg-blue-500/80"
         style={{ left: `${sliderPosition * 100}%` }}
         onPointerDown={onSliderPointerDown}
         onPointerMove={onSliderPointerMove}
         onPointerUp={onSliderPointerUp}
         onPointerCancel={onSliderPointerUp}
       >
-        <div className="absolute top-1/2 -ml-5 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border-2 border-blue-400 bg-[#0b1329] text-blue-300 shadow-2xl backdrop-blur-md transition-transform hover:scale-110 active:scale-95 font-bold text-xs">
+        <div className="absolute top-1/2 -ml-5 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-transform hover:scale-110 active:scale-95 font-bold text-xs">
           ‹ ›
         </div>
       </div>
 
       {/* Draw Mode Active Tooltip */}
       {drawMode && (
-        <div className="absolute left-1/2 top-16 z-20 -translate-x-1/2 rounded-2xl border border-emerald-500/50 bg-emerald-950/90 px-4 py-2 text-xs font-semibold text-emerald-200 shadow-2xl backdrop-blur-md animate-pulse flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+        <div className="absolute left-1/2 top-16 z-20 -translate-x-1/2 rounded-2xl border border-emerald-400 bg-emerald-100 px-4 py-2 text-xs font-semibold text-emerald-700 flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-400" />
           Click and drag on the map to draw a bounding box
         </div>
       )}
 
       {inspection && (
-        <div className="absolute right-16 bottom-16 z-20 w-64 rounded-xl border border-cyan-500/40 bg-[#0b1329]/95 p-3 text-xs shadow-2xl backdrop-blur-md">
-          <div className="mb-1 font-bold text-cyan-300">Sub-pixel Inspector</div>
+        <div className="absolute right-16 bottom-16 z-20 w-64 rounded-xl border border-slate-300 bg-white p-3 text-xs">
+          <div className="mb-1 font-bold text-cyan-700">Sub-pixel Inspector</div>
           {inspection.loading ? <span className="text-slate-400">Reading output raster…</span>
-            : inspection.error ? <span className="text-rose-300">{inspection.error}</span>
-              : <><div className="font-semibold text-white">{inspection.class_name?.replace('_', ' ')}</div>
+            : inspection.error ? <span className="text-rose-700">{inspection.error}</span>
+              : <><div className="font-semibold text-slate-900">{inspection.class_name?.replace('_', ' ')}</div>
                 <div className="mt-1 text-slate-400">Class fraction: {inspection.class_fraction_percent}%</div>
-                <div className="mt-1 font-mono text-[10px] text-slate-500">{inspection.latitude?.toFixed(5)}, {inspection.longitude?.toFixed(5)}</div></>}
+                <div className="mt-1 font-mono text-[10px] text-slate-400">{inspection.latitude?.toFixed(5)}, {inspection.longitude?.toFixed(5)}</div></>}
         </div>
       )}
 
       {/* Bottom Map Coordinates & Scale Bar */}
-      <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 flex items-center gap-4 rounded-xl border border-slate-800/80 bg-[#0b1329]/90 px-4 py-1.5 text-[11px] font-mono text-slate-300 shadow-xl backdrop-blur-md">
+      <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-[11px] font-mono text-slate-700">
         <span>500 m</span>
-        <span className="text-slate-600">|</span>
+        <span className="text-slate-300">|</span>
         <span>
           Lat: {camera.center[1].toFixed(4)} Lon: {camera.center[0].toFixed(4)}
         </span>
-        <span className="text-slate-600">|</span>
+        <span className="text-slate-300">|</span>
         <span>Zoom: {camera.zoom.toFixed(0)}</span>
-        <span className="text-slate-600">|</span>
-        <span className="text-blue-400 font-bold">Scale: {(10 / settings.scaleFactor).toFixed(1)} m/pixel</span>
+        <span className="text-slate-300">|</span>
+        <span className="text-blue-600 font-bold">Scale: {(10 / settings.scaleFactor).toFixed(1)} m/pixel</span>
       </div>
     </div>
   );

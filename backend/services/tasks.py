@@ -171,6 +171,8 @@ def get_job_status(job_id: str) -> Optional[SRMResponse]:
         job.scale_factor = payload.get("scale_factor")
         job.miou_score = payload.get("miou_score")
         job.inference_mode = payload.get("inference_mode")
+        job.confidence_mean_percent = payload.get("confidence_mean_percent")
+        job.high_uncertainty_percent = payload.get("high_uncertainty_percent")
         job.cog_output_url = f"/api/v1/jobs/{job_id}/export.tif"
         job.tile_url_template = (
             f"{settings.titiler_base_url}/cog/tiles/WebMercatorQuad/"

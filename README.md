@@ -157,7 +157,7 @@ The API still needs Redis and PostGIS reachable; the simplest split is
 backend/      FastAPI gateway, STAC ingestion, preprocessing, COG export, PostGIS models
 ml_engine/    PyTorch D-SUN + SwinIR inference, unmixing losses, MRF smoothing
 frontend/     React 18 + Vite, MapLibre GL dual canvas, analytics drawer
-data_cache/   Pre-cached offline demo granules (Delhi NCR, Kerala coastal, Rajasthan arid)
+data_cache/   Pre-cached offline demo granules (Delhi NCR, Kerala coastal, Rajasthan arid, Chennai coastal)
 storage/cogs/     Generated Cloud-Optimized GeoTIFFs, shared with the TiTiler container
 storage/tensors/  Aligned tensors handed from the ingest worker to the GPU worker
 docs/         PRD, MVP spec, architecture, datasets, tech-clash mitigations, demo script

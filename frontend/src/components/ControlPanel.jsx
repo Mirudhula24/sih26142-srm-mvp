@@ -52,7 +52,7 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
       <button
         type="button"
         onClick={toggleControl}
-        className="absolute left-3 top-16 z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700/60 bg-[#0f172a]/95 text-slate-200 shadow-xl backdrop-blur-md transition-all hover:bg-blue-600 hover:text-white cursor-pointer"
+        className="absolute left-3 top-16 z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-800 transition-colors hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
         title="Open Workflow Panel"
       >
         <ChevronRight size={20} />
@@ -61,16 +61,16 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
   }
 
   return (
-    <aside className="relative flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-r border-[#1e293b] bg-[#0b1329]/95 p-4 text-slate-100 backdrop-blur-lg shadow-2xl transition-all duration-300 z-20">
+    <aside className="relative flex w-80 shrink-0 flex-col gap-5 overflow-y-auto border-r border-slate-200 bg-white p-4 text-slate-900 z-20">
       {/* Workflow Header & Collapse */}
-      <div className="flex items-center justify-between border-b border-[#1e293b] pb-2.5">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-          <Layers size={16} className="text-blue-400" /> Workflow
+      <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+          <Layers size={16} className="text-blue-600" /> Workflow
         </h2>
         <button
           type="button"
           onClick={toggleControl}
-          className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-700/50 bg-slate-800/60 text-slate-400 transition-all hover:bg-slate-700 hover:text-white cursor-pointer"
+          className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-slate-400 transition-all hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
           title="Collapse Panel"
         >
           <ChevronUp size={16} />
@@ -78,21 +78,21 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
       </div>
 
       {/* Step 1: Define Area */}
-      <section className="flex flex-col gap-2.5 rounded-xl border border-[#1e293b] bg-[#111c38]/60 p-3.5 shadow-sm">
+      <section className="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[11px]">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-[11px]">
             ✓
           </span>
-          <h3 className="text-xs font-bold text-white">1. Define Area</h3>
+          <h3 className="text-xs font-bold text-slate-900">1. Define Area</h3>
         </div>
 
         {/* Active AOI Card */}
-        <div className="flex flex-col gap-1 rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-2.5 text-xs">
-          <div className="flex items-center justify-between text-emerald-400 font-semibold">
+        <div className="flex flex-col gap-1 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs">
+          <div className="flex items-center justify-between text-emerald-700 font-semibold">
             <span>AOI Selected</span>
             <CheckCircle2 size={14} />
           </div>
-          <p className="text-[11px] text-slate-300">
+          <p className="text-[11px] text-slate-700">
             {aoi ? '42.6 km² · Selected Region' : 'Delhi NCR · 42.6 km²'}
           </p>
         </div>
@@ -108,10 +108,10 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
                   key={r.key}
                   type="button"
                   onClick={() => handleRegionClick(r)}
-                  className={`rounded-md border px-1.5 py-1 text-center text-[10px] font-semibold truncate transition-all cursor-pointer ${
+                  className={`rounded-full border px-2 py-1 text-center text-[10px] font-semibold truncate transition-all cursor-pointer ${
                     isSel
-                      ? 'border-emerald-500 bg-emerald-950/60 text-emerald-300'
-                      : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white'
+                      ? 'border-slate-900 bg-slate-900 text-white'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
                   {r.label.split('—')[0].trim()}
@@ -125,17 +125,17 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
         <button
           type="button"
           onClick={() => setDrawMode(!drawMode)}
-          className={`flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-md transition-all cursor-pointer ${
+          className={`flex w-full items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
             drawMode
-              ? 'bg-emerald-600 text-white shadow-emerald-600/30 ring-2 ring-emerald-400'
-              : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 text-white hover:brightness-110'
+              ? 'bg-slate-900 text-white'
+              : 'bg-slate-900 text-white hover:bg-slate-800'
           }`}
         >
           <Pencil size={14} />
           {drawMode ? 'Drawing... click map' : 'Edit Area on Map'}
         </button>
 
-        <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#1e293b] bg-slate-900/70 px-3 py-1.5 text-xs font-medium text-slate-300 transition-all hover:border-slate-700 hover:text-white">
+        <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
           <Upload size={14} /> Upload GeoJSON
           <input
             type="file"
@@ -147,12 +147,12 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
       </section>
 
       {/* Step 2: Configure Resolution */}
-      <section className="flex flex-col gap-2.5 rounded-xl border border-[#1e293b] bg-[#111c38]/60 p-3.5 shadow-sm">
+      <section className="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/20 text-blue-400 font-bold text-[11px]">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-[11px]">
             2
           </span>
-          <h3 className="text-xs font-bold text-white">2. Configure Resolution</h3>
+          <h3 className="text-xs font-bold text-slate-900">2. Configure Resolution</h3>
         </div>
 
         <p className="text-[11px] text-slate-400">Choose Output Resolution</p>
@@ -165,20 +165,20 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
             onClick={() => setSettings({ scaleFactor: 4 })}
             className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border p-3 text-center transition-all cursor-pointer ${
               settings.scaleFactor === 4
-                ? 'border-blue-500 bg-blue-950/50 text-white shadow-lg shadow-blue-500/20 ring-1 ring-blue-400'
-                : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                ? 'border-slate-900 bg-slate-900 text-white'
+                : 'border-slate-200 bg-slate-50 text-slate-400 hover:border-slate-300 hover:text-slate-800'
             }`}
           >
             <div className="flex items-center gap-1">
               <span className={`h-3 w-3 rounded-full border flex items-center justify-center ${
-                settings.scaleFactor === 4 ? 'border-blue-400 bg-blue-500' : 'border-slate-600'
+                settings.scaleFactor === 4 ? 'border-blue-400 bg-blue-500' : 'border-slate-300'
               }`}>
                 {settings.scaleFactor === 4 && <span className="h-1 w-1 rounded-full bg-white" />}
               </span>
-              <span className="text-base font-extrabold text-white">4×</span>
+              <span className="text-base font-extrabold">4×</span>
             </div>
-            <span className="text-xs font-bold text-slate-200">2.5 m</span>
-            <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[9px] font-semibold text-blue-300 flex items-center gap-0.5">
+            <span className="text-xs font-bold">2.5 m</span>
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-semibold text-emerald-700 flex items-center gap-0.5">
               Recommended ⭐
             </span>
           </button>
@@ -189,20 +189,20 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
             onClick={() => setSettings({ scaleFactor: 8 })}
             className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border p-3 text-center transition-all cursor-pointer ${
               settings.scaleFactor === 8
-                ? 'border-blue-500 bg-blue-950/50 text-white shadow-lg shadow-blue-500/20 ring-1 ring-blue-400'
-                : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                ? 'border-slate-900 bg-slate-900 text-white'
+                : 'border-slate-200 bg-slate-50 text-slate-400 hover:border-slate-300 hover:text-slate-800'
             }`}
           >
             <div className="flex items-center gap-1">
               <span className={`h-3 w-3 rounded-full border flex items-center justify-center ${
-                settings.scaleFactor === 8 ? 'border-blue-400 bg-blue-500' : 'border-slate-600'
+                settings.scaleFactor === 8 ? 'border-blue-400 bg-blue-500' : 'border-slate-300'
               }`}>
                 {settings.scaleFactor === 8 && <span className="h-1 w-1 rounded-full bg-white" />}
               </span>
-              <span className="text-base font-extrabold text-white">8×</span>
+              <span className="text-base font-extrabold">8×</span>
             </div>
-            <span className="text-xs font-bold text-slate-200">1.25 m</span>
-            <span className="text-[9px] text-slate-500">Maximum detail</span>
+            <span className="text-xs font-bold">1.25 m</span>
+            <span className="text-[9px] text-slate-400">Maximum detail</span>
           </button>
         </div>
 
@@ -210,17 +210,17 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
         <button
           type="button"
           onClick={toggleAdvanced}
-          className="flex items-center justify-between text-xs font-medium text-slate-400 hover:text-white pt-1 cursor-pointer"
+          className="flex items-center justify-between text-xs font-medium text-slate-400 hover:text-slate-900 pt-1 cursor-pointer"
         >
           <span>Advanced Settings</span>
           {advancedOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
 
         {advancedOpen && (
-          <div className="flex flex-col gap-2.5 rounded-lg bg-slate-900/80 p-2.5 text-xs text-slate-300">
+          <div className="flex flex-col gap-2.5 rounded-lg bg-slate-50 p-2.5 text-xs text-slate-700">
             <div className="flex justify-between items-center">
               <span>Max Cloud Cover</span>
-              <span className="font-bold text-blue-400">{settings.maxCloudCover}%</span>
+              <span className="font-bold text-blue-600">{settings.maxCloudCover}%</span>
             </div>
             <input
               type="range"
@@ -244,12 +244,12 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
       </section>
 
       {/* Step 3: Process Mapping */}
-      <section className="flex flex-col gap-2.5 rounded-xl border border-[#1e293b] bg-[#111c38]/60 p-3.5 shadow-sm">
+      <section className="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 font-bold text-[11px]">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold text-[11px]">
             3
           </span>
-          <h3 className="text-xs font-bold text-white">3. Process Mapping</h3>
+          <h3 className="text-xs font-bold text-slate-900">3. Process Mapping</h3>
         </div>
         <p className="text-[11px] text-slate-400">Run GeoSRM AI Model</p>
 
@@ -257,15 +257,15 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
           type="button"
           onClick={onRun}
           disabled={busy}
-          className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold uppercase tracking-wider text-white shadow-xl transition-all cursor-pointer ${
+          className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
             busy
-              ? 'bg-indigo-950 border border-indigo-800/50 text-indigo-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:brightness-110 active:scale-[0.98] shadow-indigo-600/30 ring-1 ring-white/20'
+              ? 'bg-slate-100 border border-slate-300 text-slate-400 cursor-not-allowed'
+              : 'bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98]'
           }`}
         >
           {busy ? (
             <>
-              <Loader2 size={16} className="animate-spin text-indigo-300" />
+              <Loader2 size={16} className="animate-spin text-indigo-700" />
               <span>Running Analysis...</span>
             </>
           ) : (
@@ -278,15 +278,15 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
       </section>
 
       {/* Step 4: Results & Analytics */}
-      <section className="flex flex-col gap-2 rounded-xl border border-[#1e293b] bg-[#111c38]/40 p-3.5 opacity-90">
+      <section className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-[#faf7f2] p-3.5 opacity-90">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`flex h-5 w-5 items-center justify-center rounded-full font-bold text-[11px] ${
-              isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+              isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
             }`}>
               4
             </span>
-            <h3 className="text-xs font-bold text-white">4. Results & Analytics</h3>
+            <h3 className="text-xs font-bold text-slate-900">4. Results & Analytics</h3>
           </div>
         </div>
 
@@ -295,12 +295,12 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
         <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
           {isCompleted ? (
             <>
-              <CheckCircle2 size={14} className="text-emerald-400" />
-              <span className="text-emerald-300 font-semibold">Results ready to view</span>
+              <CheckCircle2 size={14} className="text-emerald-600" />
+              <span className="text-emerald-700 font-semibold">Results ready to view</span>
             </>
           ) : (
             <>
-              <Lock size={14} className="text-slate-500" />
+              <Lock size={14} className="text-slate-400" />
               <span>Locked until processing</span>
             </>
           )}
@@ -308,9 +308,9 @@ export default function ControlPanel({ onRun, onRegionSelect, onUploadGeoJSON })
       </section>
 
       {/* Footer Support Link */}
-      <div className="mt-auto border-t border-[#1e293b] pt-3 text-[11px] text-slate-400 flex items-center justify-between hover:text-white transition-colors cursor-pointer">
+      <div className="mt-auto border-t border-slate-200 pt-3 text-[11px] text-slate-400 flex items-center justify-between hover:text-slate-900 transition-colors cursor-pointer">
         <div className="flex items-center gap-1.5">
-          <BookOpen size={14} className="text-blue-400" />
+          <BookOpen size={14} className="text-blue-600" />
           <span>Need help? View docs</span>
         </div>
         <span>›</span>

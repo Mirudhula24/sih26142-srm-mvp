@@ -64,15 +64,15 @@ export default function ProcessingStepper({ regionName = 'Delhi NCR', areaKm2 = 
   };
 
   return (
-    <div className="absolute bottom-4 left-1/2 z-30 w-full max-w-4xl -translate-x-1/2 rounded-2xl border border-cyan-500/30 bg-[#0b1329]/95 p-4 text-slate-100 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom duration-300">
+    <div className="absolute bottom-4 left-1/2 z-30 w-full max-w-4xl -translate-x-1/2 rounded-2xl border border-slate-300 bg-white p-4 text-slate-900">
       {/* Top Title & Timer Bar */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/40 bg-gradient-to-tr from-cyan-950 to-indigo-950 text-cyan-400 shadow-md shadow-cyan-500/20">
-            <Brain size={20} className={busy ? 'animate-pulse' : ''} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-slate-100 text-slate-700">
+            <Brain size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold tracking-tight text-slate-900 flex items-center gap-2">
               Mapping {granule ? granule.granule_id.split('_')[5] ?? regionName : regionName}
             </h3>
             <p className="text-[10px] text-slate-400">
@@ -83,11 +83,11 @@ export default function ProcessingStepper({ regionName = 'Delhi NCR', areaKm2 = 
 
         <div className="flex items-center gap-4 text-xs font-mono">
           <div className="flex items-center gap-1.5 text-slate-400">
-            <Clock size={13} className="text-cyan-400" />
+            <Clock size={13} className="text-cyan-600" />
             <span>Elapsed: {formatSec(elapsed)}</span>
           </div>
           {busy && (
-            <div className="flex items-center gap-1.5 text-cyan-300 font-semibold">
+            <div className="flex items-center gap-1.5 text-cyan-700 font-semibold">
               <span>ETA: ~{formatSec(eta)}</span>
             </div>
           )}
@@ -105,15 +105,15 @@ export default function ProcessingStepper({ regionName = 'Delhi NCR', areaKm2 = 
             <div key={step.title} className="flex flex-col items-center gap-2 text-center">
               <div className="relative flex items-center justify-center">
                 {isDone ? (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/60 bg-emerald-950/80 text-emerald-400 shadow-md shadow-emerald-500/20">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-400 bg-emerald-100 text-emerald-600">
                     <CheckCircle2 size={18} />
                   </div>
                 ) : isCurrent ? (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400 bg-cyan-950/90 text-cyan-300 shadow-lg shadow-cyan-500/30 ring-2 ring-cyan-400/50">
-                    <Loader2 size={18} className="animate-spin text-cyan-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400 bg-cyan-100 text-cyan-700">
+                    <Loader2 size={18} className="animate-spin text-cyan-600" />
                   </div>
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-800 bg-slate-900/60 text-slate-500">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-400">
                     <IconComp size={16} />
                   </div>
                 )}
@@ -121,10 +121,10 @@ export default function ProcessingStepper({ regionName = 'Delhi NCR', areaKm2 = 
               <span
                 className={`text-[10px] leading-tight font-medium ${
                   isDone
-                    ? 'text-emerald-300'
+                    ? 'text-emerald-700'
                     : isCurrent
-                    ? 'text-cyan-200 font-bold'
-                    : 'text-slate-500'
+                    ? 'text-cyan-700 font-bold'
+                    : 'text-slate-400'
                 }`}
               >
                 {step.title}
@@ -136,19 +136,19 @@ export default function ProcessingStepper({ regionName = 'Delhi NCR', areaKm2 = 
 
       {/* Progress Bar & Readout */}
       <div className="flex items-center gap-3">
-        <div className="relative h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-900 border border-slate-800">
+        <div className="relative h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-100 border border-slate-200">
           <div
-            className="h-full bg-gradient-to-r from-cyan-500 via-teal-400 to-indigo-500 transition-all duration-300 shadow-md shadow-cyan-500/30"
+            className="h-full bg-slate-300 transition-all duration-300"
             style={{ width: `${percent}%` }}
           />
         </div>
-        <span className="font-mono text-xs font-bold text-cyan-300">{percent}%</span>
+        <span className="font-mono text-xs font-bold text-cyan-700">{percent}%</span>
       </div>
 
       {/* Info Line & Cancel Button */}
-      <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
+      <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-200 text-xs">
         <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-          <Info size={14} className="text-cyan-400 shrink-0" />
+          <Info size={14} className="text-cyan-600 shrink-0" />
           <span>
             Using GeoSRM v1.0 · Resolution: {(10 / settings.scaleFactor).toFixed(1)} m · Scale: {settings.scaleFactor}×
           </span>
@@ -158,7 +158,7 @@ export default function ProcessingStepper({ regionName = 'Delhi NCR', areaKm2 = 
           <button
             type="button"
             onClick={() => setStatus('idle')}
-            className="flex items-center gap-1.5 rounded-lg border border-rose-800/60 bg-rose-950/50 px-3 py-1 text-xs font-semibold text-rose-300 transition-all hover:bg-rose-900 hover:text-white"
+            className="flex items-center gap-1.5 rounded-lg border border-rose-300 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 transition-all hover:bg-rose-200 hover:text-slate-900"
           >
             <XCircle size={14} /> Cancel Job
           </button>

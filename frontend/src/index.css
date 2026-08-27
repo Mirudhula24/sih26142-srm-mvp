@@ -6,8 +6,9 @@ html, body, #root { height: 100%; margin: 0; }
 body {
   font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   color: #0f172a;
-  background-color: #0f172a;
+  background-color: #f4efe8;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
 }
 
 /* Custom scrollbars */
